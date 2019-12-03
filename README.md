@@ -1,0 +1,2 @@
+# license
+Mianflux Licensing Server
