@@ -49,21 +49,21 @@ func migrateDB(db *sqlx.DB) error {
 				Id: "license_1",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS licenses (
-						id       UUID,
-						owner    VARCHAR(254),
-						active   BOOLEAN DEFAULT FALSE,
-						created  TIMESTAMP NOT NULL,
-						duration INTEGER,
-						expires  TIMESTAMP,
-						metadata JSON,
-						plan     JSON,
-						PRIMARY KEY (id, owner)
+						id         UUID,
+						issuer     VARCHAR(254),
+						device_id  TEXT,
+						active     BOOLEAN DEFAULT FALSE,
+						created_at TIMESTAMP NOT NULL,
+						expires_at TIMESTAMP,
+						updated_at TIMESTAMP,
+						updated_by VARCHAR(254),
+						services   TEXT ARRAY,
+						plan       JSON,
+						PRIMARY    KEY(id, issuer)
 					)`,
-					`ALTER TABLE licenses ADD CONSTRAINT ck_duration
-					CHECK ((duration IS NULL and expires IS NOT NULL) or (duration IS NOT NULL and expires IS NULL));`,
 				},
 				Down: []string{
-					"DROP TABLE licenses",
+					"DROP TABLE IF EXISTS licenses",
 				},
 			},
 		},

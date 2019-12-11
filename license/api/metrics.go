@@ -4,9 +4,9 @@
 package api
 
 import (
-	"time"
 	"context"
-	
+	"time"
+
 	"github.com/go-kit/kit/metrics"
 	"github.com/mainflux/license/license"
 )
@@ -29,13 +29,13 @@ func MetricsMiddleware(svc license.Service, counter metrics.Counter, latency met
 	}
 }
 
-func (ms *metricsMiddleware) CreateLicense(ctx context.Context, l license.License) (id string, err error) {
+func (ms *metricsMiddleware) CreateLicense(ctx context.Context, token string, l license.License) (id string, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "create_license").Add(1)
 		ms.latency.With("method", "create_license").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.CreateLicense(ctx, l)
+	return ms.svc.CreateLicense(ctx, token, l)
 }
 
 func (ms *metricsMiddleware) RetrieveLicense(ctx context.Context, owner, id string) (l license.License, err error) {
@@ -56,8 +56,7 @@ func (ms *metricsMiddleware) UpdateLicense(ctx context.Context, l license.Licens
 	return ms.svc.UpdateLicense(ctx, l)
 }
 
-
-func (ms *metricsMiddleware) RemoveLicense(ctx context.Context, owner, id string) ( err error) {
+func (ms *metricsMiddleware) RemoveLicense(ctx context.Context, owner, id string) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "remove_license").Add(1)
 		ms.latency.With("method", "remove_license").Observe(time.Since(begin).Seconds())

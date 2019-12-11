@@ -3,14 +3,13 @@
 
 package api
 
-
 import (
 	"context"
 	"fmt"
 	"time"
 
-	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/license/license"
+	log "github.com/mainflux/mainflux/logger"
 )
 
 var _ license.Service = (*loggingMiddleware)(nil)
@@ -25,7 +24,7 @@ func NewLoggingMiddleware(svc license.Service, logger log.Logger) license.Servic
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) CreateLicense(ctx context.Context, l license.License) (id string, err error) {
+func (lm *loggingMiddleware) CreateLicense(ctx context.Context, token string, l license.License) (id string, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method create_license with ID %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -35,7 +34,7 @@ func (lm *loggingMiddleware) CreateLicense(ctx context.Context, l license.Licens
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.CreateLicense(ctx,  l)
+	return lm.svc.CreateLicense(ctx, token, l)
 }
 
 func (lm *loggingMiddleware) RetrieveLicense(ctx context.Context, owner, id string) (l license.License, err error) {

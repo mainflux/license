@@ -18,11 +18,10 @@ func createLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 		}
 
 		l := license.License{
-			Owner:    req.token,
-			Metadata: req.Metadata,
+			Services: req.Services,
 			Plan:     req.Plan,
 		}
-		saved, err := svc.CreateLicense(ctx, l)
+		saved, err := svc.CreateLicense(ctx, req.token, l)
 		if err != nil {
 			return nil, err
 		}
@@ -67,8 +66,8 @@ func updateLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 		}
 
 		l := license.License{
-			Owner:    req.token,
-			Metadata: req.Metadata,
+			Issuer:   req.token,
+			Services: req.Services,
 			Plan:     req.Plan,
 		}
 

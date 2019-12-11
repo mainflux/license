@@ -21,7 +21,7 @@ var (
 type Service interface {
 	// CreateLicense adds License that belongs to the
 	// user identified by the provided key.
-	CreateLicense(context.Context, License) (string, error)
+	CreateLicense(context.Context, string, License) (string, error)
 
 	// RetrieveLicense retrieves the License by given ID that belongs to
 	//  the user identified by the provided key.
@@ -37,18 +37,30 @@ type Service interface {
 
 type licenseService struct {
 	repo Repository
+	idp  IdentityProvider
 	auth mainflux.UsersServiceClient
 }
 
 // New returns new instance of License Service.
-func New(repo Repository, auth mainflux.UsersServiceClient) Service {
+func New(repo Repository, idp IdentityProvider, auth mainflux.UsersServiceClient) Service {
 	return licenseService{
 		repo: repo,
+		idp:  idp,
 		auth: auth,
 	}
 }
 
-func (svc licenseService) CreateLicense(ctx context.Context, l License) (string, error) {
+func (svc licenseService) CreateLicense(ctx context.Context, token string, l License) (string, error) {
+	issuer, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return "", err
+	}
+
+	l.ID, err = svc.idp.ID()
+	l.Issuer = issuer.GetValue()
+	if err != nil {
+		return "", err
+	}
 	return svc.repo.Save(ctx, l)
 }
 

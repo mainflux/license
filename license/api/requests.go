@@ -24,13 +24,16 @@ func (req licenseReq) validate() error {
 type createLicenseReq struct {
 	token    string
 	Duration uint                   `json:"duration,omitempty"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
+	Services []string               `json:"services,omitempty"`
 	Plan     map[string]interface{} `json:"plan,omitempty"`
 }
 
 func (req createLicenseReq) validate() error {
-	if req.token == "" || req.Plan == nil || len(req.Plan) == 0 {
+	if req.token == "" {
 		return license.ErrUnauthorizedAccess
+	}
+	if req.Services == nil || len(req.Services) == 0 {
+		return license.ErrMalformedEntity
 	}
 
 	return nil
@@ -39,8 +42,8 @@ func (req createLicenseReq) validate() error {
 type updateLicenseReq struct {
 	token    string
 	id       string
+	Services []string               `json:"services,omitempty"`
 	Duration uint                   `json:"duration,omitempty"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
 	Plan     map[string]interface{} `json:"plan,omitempty"`
 }
 
@@ -50,6 +53,9 @@ func (req updateLicenseReq) validate() error {
 	}
 	if req.id == "" {
 		return license.ErrNotFound
+	}
+	if req.Services == nil || len(req.Services) == 0 {
+		return license.ErrUnauthorizedAccess
 	}
 
 	return nil

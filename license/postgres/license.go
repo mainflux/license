@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/lib/pq"
@@ -30,10 +31,14 @@ func New(db Database) license.Repository {
 }
 
 func (repo licenseRepository) Save(ctx context.Context, l license.License) (string, error) {
-	q := `INSERT INTO license (id, owner, active, created, duration, expires, metadata, plan)
-          VALUES (:id, :owner, :active, :created, :duration, :expires, :metadata, :plan)`
+	q := `INSERT INTO licenses (id, issuer, device_id, created_at, expires_at, updated_at, updated_by, services, plan)
+          VALUES (:id, :issuer, :device_id, :created_at, :expires_at, :updated_at, :updated_by, :services, :plan)`
 
-	dbl := toDBLicense(l)
+	dbl, err := toDBLicense(l)
+	if err != nil {
+		return "", err
+	}
+
 	if _, err := repo.db.NamedExecContext(ctx, q, dbl); err != nil {
 
 		pqErr, ok := err.(*pq.Error)
@@ -49,13 +54,13 @@ func (repo licenseRepository) Save(ctx context.Context, l license.License) (stri
 	return dbl.ID, nil
 }
 
-func (repo licenseRepository) Retrieve(ctx context.Context, owner, id string) (license.License, error) {
-	q := `SELECT id, active, created, duration, expires, metadata, plan FROM keys WHERE owner = $1 AND id = $2`
+func (repo licenseRepository) Retrieve(ctx context.Context, issuer, id string) (license.License, error) {
+	q := `SELECT id, issuer, device_id, created_at, expires_at, updated_at, updated_by, services, plan FROM licenses WHERE issuer = $1 AND id = $2`
 	dbl := dbLicense{
-		ID:    id,
-		Owner: owner,
+		ID:     id,
+		Issuer: issuer,
 	}
-	if err := repo.db.QueryRowxContext(ctx, q, owner, id).StructScan(&dbl); err != nil {
+	if err := repo.db.QueryRowxContext(ctx, q, issuer, id).StructScan(&dbl); err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
 			return license.License{}, license.ErrNotFound
@@ -64,12 +69,16 @@ func (repo licenseRepository) Retrieve(ctx context.Context, owner, id string) (l
 		return license.License{}, err
 	}
 
-	return toLicense(dbl), nil
+	return toLicense(dbl)
 }
 
 func (repo licenseRepository) Update(ctx context.Context, l license.License) error {
-	q := `UPDATE license SET plan = :plan, metadata = :metadata WHERE owner = :owner AND id = :id;`
-	dbl := toDBLicense(l)
+	q := `UPDATE licenses SET plan = :plan, services = :services, updated_at = :updated_at, expires_at = :expires_at
+		  WHERE issuer = :issuer AND id = :id;`
+	dbl, err := toDBLicense(l)
+	if err != nil {
+		return err
+	}
 
 	res, err := repo.db.NamedExecContext(ctx, q, dbl)
 	if err != nil {
@@ -97,7 +106,7 @@ func (repo licenseRepository) Update(ctx context.Context, l license.License) err
 }
 
 func (repo licenseRepository) Remove(ctx context.Context, owner, id string) error {
-	q := `DELETE FROM license WHERE owner = $1 AND id = $2`
+	q := `DELETE FROM licenses WHERE issuer = $1 AND id = $2`
 
 	if _, err := repo.db.ExecContext(ctx, q, owner, id); err != nil {
 		return err
@@ -107,38 +116,57 @@ func (repo licenseRepository) Remove(ctx context.Context, owner, id string) erro
 }
 
 type dbLicense struct {
-	ID       string                 `db:"id"`
-	Owner    string                 `db:"owner"`
-	Active   bool                   `db:"active"`
-	Created  time.Time              `db:"created"`
-	Duration *uint                  `db:"duration"`
-	Expires  *time.Time             `db:"expires"`
-	Metadata map[string]interface{} `db:"metadata"`
-	Plan     map[string]interface{} `db:"plan"`
+	ID        string         `db:"id"`
+	Issuer    string         `db:"issuer"`
+	DeviceID  string         `db:"device_id"`
+	Active    bool           `db:"active"`
+	CreatedAt time.Time      `db:"created_at"`
+	ExpiresAt time.Time      `db:"expires_at"`
+	UpdatedAt time.Time      `db:"updated_at"`
+	UpdatedBy string         `db:"updated_by"`
+	Services  pq.StringArray `db:"services"`
+	Plan      []byte         `db:"plan"`
 }
 
-func toDBLicense(l license.License) dbLicense {
+func toDBLicense(l license.License) (dbLicense, error) {
+	data := []byte("{}")
+	if len(l.Plan) > 0 {
+		b, err := json.Marshal(l.Plan)
+		if err != nil {
+			return dbLicense{}, err
+		}
+		data = b
+	}
+
 	return dbLicense{
-		ID:       l.ID,
-		Owner:    l.Owner,
-		Active:   l.Active,
-		Created:  l.Created,
-		Duration: l.Duration,
-		Expires:  l.Expires,
-		Metadata: l.Metadata,
-		Plan:     l.Plan,
-	}
+		ID:        l.ID,
+		Issuer:    l.Issuer,
+		DeviceID:  l.DeviceID,
+		Active:    l.Active,
+		CreatedAt: l.CreatedAt,
+		ExpiresAt: l.ExpiresAt,
+		UpdatedAt: l.UpdatedAt,
+		UpdatedBy: l.UpdatedBy,
+		Services:  l.Services,
+		Plan:      data,
+	}, nil
 }
 
-func toLicense(l dbLicense) license.License {
-	return license.License{
-		ID:       l.ID,
-		Owner:    l.Owner,
-		Active:   l.Active,
-		Created:  l.Created,
-		Duration: l.Duration,
-		Expires:  l.Expires,
-		Metadata: l.Metadata,
-		Plan:     l.Plan,
+func toLicense(l dbLicense) (license.License, error) {
+	var plan map[string]interface{}
+	if err := json.Unmarshal([]byte(l.Plan), &plan); err != nil {
+		return license.License{}, err
 	}
+	return license.License{
+		ID:        l.ID,
+		Issuer:    l.Issuer,
+		DeviceID:  l.DeviceID,
+		Active:    l.Active,
+		CreatedAt: l.CreatedAt,
+		ExpiresAt: l.ExpiresAt,
+		UpdatedAt: l.UpdatedAt,
+		UpdatedBy: l.UpdatedBy,
+		Services:  l.Services,
+		Plan:      plan,
+	}, nil
 }

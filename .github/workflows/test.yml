@@ -1,0 +1,21 @@
+name: test
+on: [push]
+jobs:
+  build:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v1
+    - name: test
+      run: bash scripts/ci.sh
+    - name: Upload coverage to Codecov  
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./profile.out
+        name: codecov

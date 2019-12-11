@@ -9,14 +9,16 @@ import "context"
 
 // License represents single license object.
 type License struct {
-	ID       string
-	Owner    string
-	Active   bool
-	Created  time.Time
-	Duration *uint
-	Expires  *time.Time
-	Metadata map[string]interface{}
-	Plan     map[string]interface{}
+	ID        string
+	Issuer    string
+	DeviceID  string
+	Active    bool
+	CreatedAt time.Time
+	ExpiresAt time.Time
+	UpdatedBy string
+	UpdatedAt time.Time
+	Services  []string
+	Plan      map[string]interface{}
 }
 
 // Repository specifies a License persistence API.

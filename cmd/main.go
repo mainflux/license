@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	uuid "github.com/mainflux/license/license/uuid"
 	"io"
 	"io/ioutil"
 	"log"
@@ -191,8 +192,9 @@ func initJaeger(svcName, url string, logger mflog.Logger) (opentracing.Tracer, i
 
 func newService(auth mainflux.UsersServiceClient, db *sqlx.DB, logger mflog.Logger, cfg config) license.Service {
 	licenseRepo := postgres.New(db)
+	idp := uuid.New()
 
-	svc := license.New(licenseRepo, auth)
+	svc := license.New(licenseRepo, idp, auth)
 	svc = api.NewLoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -230,7 +232,7 @@ func connectToAuth(cfg config, logger mflog.Logger) *grpc.ClientConn {
 
 	conn, err := grpc.Dial(cfg.authURL, opts...)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to users service: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to authn service: %s", err))
 		os.Exit(1)
 	}
 
