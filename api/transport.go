@@ -6,16 +6,19 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/mainflux/license/errors"
 
 	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/license"
 	"github.com/mainflux/mainflux"
+	log "github.com/mainflux/mainflux/logger"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -25,10 +28,14 @@ const contentType = "application/json"
 var (
 	errUnsupportedContentType = errors.New("unsupported content type")
 	errInvalidQueryParams     = errors.New("invalid query params")
+
+	logger log.Logger
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(tracer opentracing.Tracer, svc license.Service) http.Handler {
+func MakeHandler(tracer opentracing.Tracer, l log.Logger, svc license.Service) http.Handler {
+	logger = l
+
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
@@ -133,14 +140,6 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", contentType)
 
 	switch err {
-	case license.ErrMalformedEntity:
-		w.WriteHeader(http.StatusBadRequest)
-	case license.ErrUnauthorizedAccess:
-		w.WriteHeader(http.StatusForbidden)
-	case license.ErrNotFound:
-		w.WriteHeader(http.StatusNotFound)
-	case license.ErrConflict:
-		w.WriteHeader(http.StatusUnprocessableEntity)
 	case errUnsupportedContentType:
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 	case errInvalidQueryParams:
@@ -149,14 +148,25 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusBadRequest)
 	case io.EOF:
 		w.WriteHeader(http.StatusBadRequest)
-	default:
-		switch err.(type) {
-		case *json.SyntaxError:
+	}
+	switch e := err.(type) {
+	case errors.Error:
+		switch {
+		case errors.Contains(e, license.ErrMalformedEntity):
 			w.WriteHeader(http.StatusBadRequest)
-		case *json.UnmarshalTypeError:
-			w.WriteHeader(http.StatusBadRequest)
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
+		case errors.Contains(e, license.ErrUnauthorizedAccess):
+			w.WriteHeader(http.StatusForbidden)
+		case errors.Contains(e, license.ErrNotFound):
+			w.WriteHeader(http.StatusNotFound)
+		case errors.Contains(e, license.ErrConflict):
+			w.WriteHeader(http.StatusUnprocessableEntity)
 		}
+		if err := json.NewEncoder(w).Encode(errorRes{Err: e.Msg()}); err != nil {
+			logger.Warn(fmt.Sprintf("failed to send error response %s", err))
+		}
+	case *json.SyntaxError, *json.UnmarshalTypeError:
+		w.WriteHeader(http.StatusBadRequest)
+	default:
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

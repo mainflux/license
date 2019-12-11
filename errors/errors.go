@@ -21,20 +21,19 @@ var _ Error = (*customError)(nil)
 // customError struct represents a Mainflux error
 type customError struct {
 	msg string
-	err *customError
+	err Error
 }
 
 func (ce *customError) Error() string {
 	if ce == nil {
 		return ""
 	}
-
+	if ce.err == nil {
+		return ce.msg
+	}
 	return ce.msg + " : " + ce.err.Error()
 }
 
-// Be careful when modifying this package. Internal struct customError is
-// used in such a way that Msg() and Err() are never called over nil
-// instance and you might need to add `if ce == nil` check.
 func (ce *customError) Msg() string {
 	return ce.msg
 }
@@ -75,11 +74,11 @@ func Wrap(wrapper error, err error) Error {
 	}
 }
 
-func cast(err error) *customError {
+func cast(err error) Error {
 	if err == nil {
 		return nil
 	}
-	if e, ok := err.(*customError); ok {
+	if e, ok := err.(Error); ok {
 		return e
 	}
 	return &customError{

@@ -63,7 +63,7 @@ func (repo licenseRepository) Retrieve(ctx context.Context, issuer, id string) (
 	if err := repo.db.QueryRowxContext(ctx, q, issuer, id).StructScan(&dbl); err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
-			return license.License{}, license.ErrNotFound
+			return license.License{}, errors.Wrap(license.ErrNotFound, err)
 		}
 
 		return license.License{}, err

@@ -108,7 +108,7 @@ func main() {
 	licenseTracer, licenseCloser := initJaeger("license", cfg.jaegerURL, logger)
 	defer licenseCloser.Close()
 
-	go startHTTPServer(api.MakeHandler(licenseTracer, svc), cfg, logger, errs)
+	go startHTTPServer(api.MakeHandler(licenseTracer, logger, svc), cfg, logger, errs)
 
 	go func() {
 		c := make(chan os.Signal)

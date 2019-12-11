@@ -5,8 +5,9 @@ package license
 
 import (
 	"context"
-	"errors"
+	errs "errors"
 
+	"github.com/mainflux/license/errors"
 	"github.com/mainflux/mainflux"
 )
 
@@ -15,6 +16,8 @@ var (
 	ErrNotFound           = errors.New("entity does not exist")
 	ErrMalformedEntity    = errors.New("malformed entity data")
 	ErrUnauthorizedAccess = errors.New("unauthorized access")
+
+	errIssuedAt = errs.New("invalid issue data")
 )
 
 // Service represents licensing service API specification.
@@ -52,12 +55,12 @@ func New(repo Repository, idp IdentityProvider, auth mainflux.UsersServiceClient
 
 func (svc licenseService) CreateLicense(ctx context.Context, token string, l License) (string, error) {
 	if l.CreatedAt.IsZero() {
-		return "", ErrMalformedEntity
+		return "", errors.Wrap(ErrMalformedEntity, errIssuedAt)
 	}
 
 	issuer, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	l.ID, err = svc.idp.ID()

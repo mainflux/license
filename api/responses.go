@@ -55,3 +55,7 @@ func (res licenseRes) Headers() map[string]string {
 func (res licenseRes) Empty() bool {
 	return false
 }
+
+type errorRes struct {
+	Err string `json:"error"`
+}

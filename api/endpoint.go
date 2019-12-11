@@ -5,9 +5,10 @@ package api
 
 import (
 	"context"
+	"time"
+
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/license"
-	"time"
 )
 
 func createLicenseEndpoint(svc license.Service) endpoint.Endpoint {
