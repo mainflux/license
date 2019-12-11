@@ -3,7 +3,10 @@
 
 package api
 
-import "github.com/mainflux/license/license"
+import (
+	"github.com/mainflux/license"
+	"time"
+)
 
 type apiReq interface {
 	validate() error
@@ -23,7 +26,7 @@ func (req licenseReq) validate() error {
 
 type createLicenseReq struct {
 	token    string
-	Duration uint                   `json:"duration,omitempty"`
+	Duration time.Duration          `json:"duration,omitempty"`
 	Services []string               `json:"services,omitempty"`
 	Plan     map[string]interface{} `json:"plan,omitempty"`
 }

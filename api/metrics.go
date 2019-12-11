@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/license/license"
+	"github.com/mainflux/license"
 )
 
 var _ license.Service = (*metricsMiddleware)(nil)

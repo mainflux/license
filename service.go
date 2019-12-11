@@ -51,16 +51,23 @@ func New(repo Repository, idp IdentityProvider, auth mainflux.UsersServiceClient
 }
 
 func (svc licenseService) CreateLicense(ctx context.Context, token string, l License) (string, error) {
+	if l.CreatedAt.IsZero() {
+		return "", ErrMalformedEntity
+	}
+
 	issuer, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return "", err
 	}
 
 	l.ID, err = svc.idp.ID()
-	l.Issuer = issuer.GetValue()
 	if err != nil {
 		return "", err
 	}
+
+	l.Issuer = issuer.GetValue()
+	l.UpdatedAt = l.CreatedAt
+	l.UpdatedBy = l.Issuer
 	return svc.repo.Save(ctx, l)
 }
 

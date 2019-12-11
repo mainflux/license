@@ -6,7 +6,8 @@ package api
 import (
 	"context"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/license/license"
+	"github.com/mainflux/license"
+	"time"
 )
 
 func createLicenseEndpoint(svc license.Service) endpoint.Endpoint {
@@ -18,9 +19,12 @@ func createLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 		}
 
 		l := license.License{
-			Services: req.Services,
-			Plan:     req.Plan,
+			Services:  req.Services,
+			Plan:      req.Plan,
+			CreatedAt: time.Now().UTC(),
 		}
+		l.ExpiresAt = l.CreatedAt.Add(req.Duration * time.Second)
+
 		saved, err := svc.CreateLicense(ctx, req.token, l)
 		if err != nil {
 			return nil, err

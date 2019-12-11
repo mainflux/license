@@ -4,7 +4,20 @@ package main
 
 import (
 	"fmt"
-	uuid "github.com/mainflux/license/license/uuid"
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/jmoiron/sqlx"
+	"github.com/mainflux/license"
+	api "github.com/mainflux/license/api"
+	"github.com/mainflux/license/postgres"
+	uuid "github.com/mainflux/license/uuid"
+	mainflux "github.com/mainflux/mainflux"
+	mflog "github.com/mainflux/mainflux/logger"
+	authapi "github.com/mainflux/mainflux/users/api/grpc"
+	opentracing "github.com/opentracing/opentracing-go"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	jconfig "github.com/uber/jaeger-client-go/config"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,20 +27,6 @@ import (
 	"strconv"
 	"syscall"
 	"time"
-
-	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/license/license"
-	api "github.com/mainflux/license/license/api"
-	"github.com/mainflux/license/license/postgres"
-	mainflux "github.com/mainflux/mainflux"
-	mflog "github.com/mainflux/mainflux/logger"
-	authapi "github.com/mainflux/mainflux/users/api/grpc"
-	opentracing "github.com/opentracing/opentracing-go"
-	stdprometheus "github.com/prometheus/client_golang/prometheus"
-	jconfig "github.com/uber/jaeger-client-go/config"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 const (

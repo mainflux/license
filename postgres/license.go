@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-	"github.com/mainflux/license/license"
+	"github.com/mainflux/license"
+	"github.com/mainflux/license/errors"
 )
 
 var _ license.Repository = (*licenseRepository)(nil)
@@ -36,11 +37,10 @@ func (repo licenseRepository) Save(ctx context.Context, l license.License) (stri
 
 	dbl, err := toDBLicense(l)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(license.ErrMalformedEntity, err)
 	}
 
 	if _, err := repo.db.NamedExecContext(ctx, q, dbl); err != nil {
-
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			if pqErr.Code.Name() == errDuplicate {
@@ -77,7 +77,7 @@ func (repo licenseRepository) Update(ctx context.Context, l license.License) err
 		  WHERE issuer = :issuer AND id = :id;`
 	dbl, err := toDBLicense(l)
 	if err != nil {
-		return err
+		return errors.Wrap(license.ErrMalformedEntity, err)
 	}
 
 	res, err := repo.db.NamedExecContext(ctx, q, dbl)
@@ -86,7 +86,7 @@ func (repo licenseRepository) Update(ctx context.Context, l license.License) err
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return license.ErrMalformedEntity
+				return errors.Wrap(license.ErrMalformedEntity, err)
 			}
 		}
 

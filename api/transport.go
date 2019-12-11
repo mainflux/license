@@ -14,7 +14,7 @@ import (
 	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
-	"github.com/mainflux/license/license"
+	"github.com/mainflux/license"
 	"github.com/mainflux/mainflux"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

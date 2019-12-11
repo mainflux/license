@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mainflux/license/license"
+	"github.com/mainflux/license"
 	log "github.com/mainflux/mainflux/logger"
 )
 
