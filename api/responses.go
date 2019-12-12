@@ -30,13 +30,17 @@ func (res removeRes) Empty() bool {
 }
 
 type licenseRes struct {
-	ID       string                 `json:"id"`
-	Created  time.Time              `json:"created,omitempty"`
-	Expires  time.Time              `json:"expires,omitempty"`
-	Duration uint                   `json:"duration,omitempty"`
-	Active   bool                   `json:"active,omitempty"`
-	Plan     map[string]interface{} `json:"plan,omitempty"`
-	created  bool
+	created   bool
+	ID        string                 `json:"id,omitempty"`
+	Issuer    string                 `json:"issuer,omitempty"`
+	DeviceID  string                 `json:"device_id,omitempty"`
+	Active    bool                   `json:"active,omitempty"`
+	CreatedAt time.Time              `json:"created_at,omitempty"`
+	ExpiresAt time.Time              `json:"expires_at,omitempty"`
+	UpdatedBy string                 `json:"updated_by,omitempty"`
+	UpdatedAt time.Time              `json:"updated_at,omitempty"`
+	Services  []string               `json:"services,omitempty"`
+	Plan      map[string]interface{} `json:"plan,omitempty"`
 }
 
 func (res licenseRes) Code() int {

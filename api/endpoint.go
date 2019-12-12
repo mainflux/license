@@ -54,8 +54,17 @@ func viewLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 		}
 
 		res := licenseRes{
-			ID:      l.ID,
-			created: false,
+			ID:        l.ID,
+			created:   false,
+			Issuer:    l.Issuer,
+			DeviceID:  l.DeviceID,
+			Active:    l.Active,
+			CreatedAt: l.CreatedAt,
+			ExpiresAt: l.ExpiresAt,
+			UpdatedBy: l.UpdatedBy,
+			UpdatedAt: l.UpdatedAt,
+			Services:  l.Services,
+			Plan:      l.Plan,
 		}
 
 		return res, nil
