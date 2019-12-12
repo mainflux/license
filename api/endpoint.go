@@ -59,43 +59,38 @@ func viewLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 			Issuer:    l.Issuer,
 			DeviceID:  l.DeviceID,
 			Active:    l.Active,
-			CreatedAt: l.CreatedAt,
-			ExpiresAt: l.ExpiresAt,
+			CreatedAt: &l.CreatedAt,
+			ExpiresAt: &l.ExpiresAt,
+			UpdatedAt: &l.UpdatedAt,
 			UpdatedBy: l.UpdatedBy,
-			UpdatedAt: l.UpdatedAt,
 			Services:  l.Services,
 			Plan:      l.Plan,
 		}
-
 		return res, nil
 	}
 }
 
 func updateLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(createLicenseReq)
+		req := request.(updateLicenseReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
 		l := license.License{
-			Issuer:   req.token,
+			ID:       req.id,
 			Services: req.Services,
 			Plan:     req.Plan,
 		}
 
-		err := svc.UpdateLicense(ctx, l)
+		err := svc.UpdateLicense(ctx, req.token, l)
 		if err != nil {
 			return nil, err
 		}
 
-		res := licenseRes{
-			ID:      l.ID,
-			created: true,
-		}
+		return updateRes{}, nil
 
-		return res, nil
 	}
 }
 

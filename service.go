@@ -6,6 +6,7 @@ package license
 import (
 	"context"
 	errs "errors"
+	"time"
 
 	"github.com/mainflux/license/errors"
 	"github.com/mainflux/mainflux"
@@ -23,18 +24,19 @@ var (
 // Service represents licensing service API specification.
 type Service interface {
 	// CreateLicense adds License that belongs to the
-	// user identified by the provided key.
+	// user identified by the provided token.
 	CreateLicense(ctx context.Context, token string, l License) (string, error)
 
 	// RetrieveLicense retrieves the License by given ID that belongs to
 	//  the user identified by the provided token.
 	RetrieveLicense(ctx context.Context, token, id string) (License, error)
 
-	// UpdateLicense updates an existing License.
-	UpdateLicense(ctx context.Context, l License) error
+	// UpdateLicense updates an existing License that's issued
+	// by the given issuer.
+	UpdateLicense(ctx context.Context, token string, l License) error
 
 	// RemoveLicense removes a License with the given ID
-	// that belongs to the given owner.
+	// that belongs to the given issuer.
 	RemoveLicense(ctx context.Context, token, id string) error
 }
 
@@ -82,7 +84,15 @@ func (svc licenseService) RetrieveLicense(ctx context.Context, token, id string)
 	return svc.repo.Retrieve(ctx, issuer.GetValue(), id)
 }
 
-func (svc licenseService) UpdateLicense(ctx context.Context, l License) error {
+func (svc licenseService) UpdateLicense(ctx context.Context, token string, l License) error {
+	issuer, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	iss := issuer.GetValue()
+	l.Issuer = iss
+	l.UpdatedBy = iss
+	l.UpdatedAt = time.Now().UTC()
 	return svc.repo.Update(ctx, l)
 }
 

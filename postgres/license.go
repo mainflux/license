@@ -73,7 +73,7 @@ func (repo licenseRepository) Retrieve(ctx context.Context, issuer, id string) (
 }
 
 func (repo licenseRepository) Update(ctx context.Context, l license.License) error {
-	q := `UPDATE licenses SET plan = :plan, services = :services, updated_at = :updated_at, expires_at = :expires_at
+	q := `UPDATE licenses SET plan = :plan, services = :services, updated_at = :updated_at, updated_by = :updated_by
 		  WHERE issuer = :issuer AND id = :id;`
 	dbl, err := toDBLicense(l)
 	if err != nil {

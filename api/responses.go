@@ -4,6 +4,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -29,16 +30,30 @@ func (res removeRes) Empty() bool {
 	return true
 }
 
+type updateRes struct{}
+
+func (res updateRes) Code() int {
+	return http.StatusOK
+}
+
+func (res updateRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res updateRes) Empty() bool {
+	return true
+}
+
 type licenseRes struct {
 	created   bool
 	ID        string                 `json:"id,omitempty"`
 	Issuer    string                 `json:"issuer,omitempty"`
 	DeviceID  string                 `json:"device_id,omitempty"`
-	Active    bool                   `json:"active,omitempty"`
-	CreatedAt time.Time              `json:"created_at,omitempty"`
-	ExpiresAt time.Time              `json:"expires_at,omitempty"`
+	Active    bool                   `json:"active"`
+	CreatedAt *time.Time             `json:"created_at,omitempty"`
+	ExpiresAt *time.Time             `json:"expires_at,omitempty"`
+	UpdatedAt *time.Time             `json:"updated_at,omitempty"`
 	UpdatedBy string                 `json:"updated_by,omitempty"`
-	UpdatedAt time.Time              `json:"updated_at,omitempty"`
 	Services  []string               `json:"services,omitempty"`
 	Plan      map[string]interface{} `json:"plan,omitempty"`
 }
@@ -52,11 +67,16 @@ func (res licenseRes) Code() int {
 }
 
 func (res licenseRes) Headers() map[string]string {
-	return map[string]string{}
+	ret := make(map[string]string)
+	if res.created {
+		ret["Location"] = fmt.Sprintf("/licenses/%s", res.ID)
+	}
+
+	return ret
 }
 
 func (res licenseRes) Empty() bool {
-	return false
+	return res.created
 }
 
 type errorRes struct {

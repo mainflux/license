@@ -47,13 +47,13 @@ func (ms *metricsMiddleware) RetrieveLicense(ctx context.Context, owner, id stri
 	return ms.svc.RetrieveLicense(ctx, owner, id)
 }
 
-func (ms *metricsMiddleware) UpdateLicense(ctx context.Context, l license.License) (err error) {
+func (ms *metricsMiddleware) UpdateLicense(ctx context.Context, token string, l license.License) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "update_license").Add(1)
 		ms.latency.With("method", "update_license").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.UpdateLicense(ctx, l)
+	return ms.svc.UpdateLicense(ctx, token, l)
 }
 
 func (ms *metricsMiddleware) RemoveLicense(ctx context.Context, owner, id string) (err error) {

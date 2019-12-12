@@ -50,7 +50,7 @@ func (lm *loggingMiddleware) RetrieveLicense(ctx context.Context, owner, id stri
 	return lm.svc.RetrieveLicense(ctx, owner, id)
 }
 
-func (lm *loggingMiddleware) UpdateLicense(ctx context.Context, l license.License) (err error) {
+func (lm *loggingMiddleware) UpdateLicense(ctx context.Context, token string, l license.License) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_license with ID %s took %s to complete", l.ID, time.Since(begin))
 		if err != nil {
@@ -60,7 +60,7 @@ func (lm *loggingMiddleware) UpdateLicense(ctx context.Context, l license.Licens
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.UpdateLicense(ctx, l)
+	return lm.svc.UpdateLicense(ctx, token, l)
 }
 
 func (lm *loggingMiddleware) RemoveLicense(ctx context.Context, owner, id string) (err error) {
