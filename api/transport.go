@@ -43,29 +43,43 @@ func MakeHandler(tracer opentracing.Tracer, l log.Logger, svc license.Service) h
 	r := bone.New()
 
 	r.Post("/licenses", kithttp.NewServer(
-		kitot.TraceServer(tracer, "create_license")(createLicenseEndpoint(svc)),
-		decodeLicenseCreation,
+		kitot.TraceServer(tracer, "create_license")(createEndpoint(svc)),
+		decodeCreation,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/licenses/:id", kithttp.NewServer(
-		kitot.TraceServer(tracer, "view_license")(viewLicenseEndpoint(svc)),
-		decodeLicenseView,
+		kitot.TraceServer(tracer, "view_license")(viewEndpoint(svc)),
+		decodeView,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Patch("/licenses/:id", kithttp.NewServer(
-		kitot.TraceServer(tracer, "update_license")(updateLicenseEndpoint(svc)),
-		decodeLicenseUpdate,
+		kitot.TraceServer(tracer, "update_license")(updateEndpoint(svc)),
+		decodeUpdate,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Delete("/licenses/:id", kithttp.NewServer(
-		kitot.TraceServer(tracer, "remove_license")(removeLicenseEndpoint(svc)),
-		decodeLicenseView,
+		kitot.TraceServer(tracer, "remove_license")(removeEndpoint(svc)),
+		decodeView,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Patch("/licenses/activation/:id", kithttp.NewServer(
+		kitot.TraceServer(tracer, "activation_license")(activationEndpoint(svc, true)),
+		decodeActivation,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Delete("/licenses/activation/:id", kithttp.NewServer(
+		kitot.TraceServer(tracer, "activation_license")(activationEndpoint(svc, false)),
+		decodeActivation,
 		encodeResponse,
 		opts...,
 	))
@@ -76,12 +90,12 @@ func MakeHandler(tracer opentracing.Tracer, l log.Logger, svc license.Service) h
 	return r
 }
 
-func decodeLicenseCreation(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeCreation(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 
-	req := createLicenseReq{token: r.Header.Get("Authorization")}
+	req := createReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -89,12 +103,12 @@ func decodeLicenseCreation(_ context.Context, r *http.Request) (interface{}, err
 	return req, nil
 }
 
-func decodeLicenseUpdate(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 
-	req := updateLicenseReq{
+	req := updateReq{
 		token: r.Header.Get("Authorization"),
 		id:    bone.GetValue(r, "id"),
 	}
@@ -105,7 +119,7 @@ func decodeLicenseUpdate(_ context.Context, r *http.Request) (interface{}, error
 	return req, nil
 }
 
-func decodeLicenseView(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
@@ -134,6 +148,19 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 	}
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+func decodeActivation(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, errUnsupportedContentType
+	}
+
+	req := licenseReq{
+		token: r.Header.Get("Authorization"),
+		id:    bone.GetValue(r, "id"),
+	}
+
+	return req, nil
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {

@@ -30,17 +30,17 @@ func (res removeRes) Empty() bool {
 	return true
 }
 
-type updateRes struct{}
+type successRes struct{}
 
-func (res updateRes) Code() int {
+func (res successRes) Code() int {
 	return http.StatusOK
 }
 
-func (res updateRes) Headers() map[string]string {
+func (res successRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res updateRes) Empty() bool {
+func (res successRes) Empty() bool {
 	return true
 }
 

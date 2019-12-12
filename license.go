@@ -34,4 +34,8 @@ type Repository interface {
 
 	// Remove a License with the given ID that belongs to the given owner.
 	Remove(ctx context.Context, issuer, id string) error
+
+	// ChangeActive a License with the given ID
+	// that belongs to the given issuer.
+	ChangeActive(ctx context.Context, token, id string, active bool) error
 }

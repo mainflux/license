@@ -11,9 +11,9 @@ import (
 	"github.com/mainflux/license"
 )
 
-func createLicenseEndpoint(svc license.Service) endpoint.Endpoint {
+func createEndpoint(svc license.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(createLicenseReq)
+		req := request.(createReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
@@ -26,7 +26,7 @@ func createLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 		}
 		l.ExpiresAt = l.CreatedAt.Add(req.Duration * time.Second)
 
-		saved, err := svc.CreateLicense(ctx, req.token, l)
+		saved, err := svc.Create(ctx, req.token, l)
 		if err != nil {
 			return nil, err
 		}
@@ -40,7 +40,7 @@ func createLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 	}
 }
 
-func viewLicenseEndpoint(svc license.Service) endpoint.Endpoint {
+func viewEndpoint(svc license.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(licenseReq)
 
@@ -48,7 +48,7 @@ func viewLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		l, err := svc.RetrieveLicense(ctx, req.token, req.id)
+		l, err := svc.Retrieve(ctx, req.token, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -70,9 +70,9 @@ func viewLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 	}
 }
 
-func updateLicenseEndpoint(svc license.Service) endpoint.Endpoint {
+func updateEndpoint(svc license.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(updateLicenseReq)
+		req := request.(updateReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
@@ -84,17 +84,17 @@ func updateLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 			Plan:     req.Plan,
 		}
 
-		err := svc.UpdateLicense(ctx, req.token, l)
+		err := svc.Update(ctx, req.token, l)
 		if err != nil {
 			return nil, err
 		}
 
-		return updateRes{}, nil
+		return successRes{}, nil
 
 	}
 }
 
-func removeLicenseEndpoint(svc license.Service) endpoint.Endpoint {
+func removeEndpoint(svc license.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(licenseReq)
 
@@ -102,11 +102,28 @@ func removeLicenseEndpoint(svc license.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		err := svc.RemoveLicense(ctx, req.token, req.id)
+		err := svc.Remove(ctx, req.token, req.id)
 		if err != nil {
 			return nil, err
 		}
 
 		return removeRes{}, nil
+	}
+}
+
+func activationEndpoint(svc license.Service, active bool) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(licenseReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		err := svc.ChangeActive(ctx, req.token, req.id, active)
+		if err != nil {
+			return nil, err
+		}
+
+		return successRes{}, nil
 	}
 }

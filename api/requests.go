@@ -24,14 +24,14 @@ func (req licenseReq) validate() error {
 	return nil
 }
 
-type createLicenseReq struct {
+type createReq struct {
 	token    string
 	Duration time.Duration          `json:"duration,omitempty"`
 	Services []string               `json:"services,omitempty"`
 	Plan     map[string]interface{} `json:"plan,omitempty"`
 }
 
-func (req createLicenseReq) validate() error {
+func (req createReq) validate() error {
 	if req.token == "" {
 		return license.ErrUnauthorizedAccess
 	}
@@ -42,7 +42,7 @@ func (req createLicenseReq) validate() error {
 	return nil
 }
 
-type updateLicenseReq struct {
+type updateReq struct {
 	token    string
 	id       string
 	Services []string               `json:"services,omitempty"`
@@ -50,7 +50,7 @@ type updateLicenseReq struct {
 	Plan     map[string]interface{} `json:"plan,omitempty"`
 }
 
-func (req updateLicenseReq) validate() error {
+func (req updateReq) validate() error {
 	if req.token == "" {
 		return license.ErrUnauthorizedAccess
 	}

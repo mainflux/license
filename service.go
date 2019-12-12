@@ -23,21 +23,25 @@ var (
 
 // Service represents licensing service API specification.
 type Service interface {
-	// CreateLicense adds License that belongs to the
+	// Create adds License that belongs to the
 	// user identified by the provided token.
-	CreateLicense(ctx context.Context, token string, l License) (string, error)
+	Create(ctx context.Context, token string, l License) (string, error)
 
-	// RetrieveLicense retrieves the License by given ID that belongs to
+	// Retrieve retrieves the License by given ID that belongs to
 	//  the user identified by the provided token.
-	RetrieveLicense(ctx context.Context, token, id string) (License, error)
+	Retrieve(ctx context.Context, token, id string) (License, error)
 
-	// UpdateLicense updates an existing License that's issued
+	// Update updates an existing License that's issued
 	// by the given issuer.
-	UpdateLicense(ctx context.Context, token string, l License) error
+	Update(ctx context.Context, token string, l License) error
 
-	// RemoveLicense removes a License with the given ID
+	// Remove removes a License with the given ID
 	// that belongs to the given issuer.
-	RemoveLicense(ctx context.Context, token, id string) error
+	Remove(ctx context.Context, token, id string) error
+
+	// ChangeActive a License with the given ID
+	// that belongs to the given issuer.
+	ChangeActive(ctx context.Context, token, id string, active bool) error
 }
 
 type licenseService struct {
@@ -55,7 +59,7 @@ func New(repo Repository, idp IdentityProvider, auth mainflux.UsersServiceClient
 	}
 }
 
-func (svc licenseService) CreateLicense(ctx context.Context, token string, l License) (string, error) {
+func (svc licenseService) Create(ctx context.Context, token string, l License) (string, error) {
 	if l.CreatedAt.IsZero() {
 		return "", errors.Wrap(ErrMalformedEntity, errIssuedAt)
 	}
@@ -76,7 +80,7 @@ func (svc licenseService) CreateLicense(ctx context.Context, token string, l Lic
 	return svc.repo.Save(ctx, l)
 }
 
-func (svc licenseService) RetrieveLicense(ctx context.Context, token, id string) (License, error) {
+func (svc licenseService) Retrieve(ctx context.Context, token, id string) (License, error) {
 	issuer, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return License{}, errors.Wrap(ErrUnauthorizedAccess, err)
@@ -84,7 +88,7 @@ func (svc licenseService) RetrieveLicense(ctx context.Context, token, id string)
 	return svc.repo.Retrieve(ctx, issuer.GetValue(), id)
 }
 
-func (svc licenseService) UpdateLicense(ctx context.Context, token string, l License) error {
+func (svc licenseService) Update(ctx context.Context, token string, l License) error {
 	issuer, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
@@ -96,10 +100,19 @@ func (svc licenseService) UpdateLicense(ctx context.Context, token string, l Lic
 	return svc.repo.Update(ctx, l)
 }
 
-func (svc licenseService) RemoveLicense(ctx context.Context, token, id string) error {
+func (svc licenseService) Remove(ctx context.Context, token, id string) error {
 	issuer, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return svc.repo.Remove(ctx, issuer.GetValue(), id)
+}
+
+func (svc licenseService) ChangeActive(ctx context.Context, token, id string, active bool) error {
+	issuer, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	return svc.repo.ChangeActive(ctx, issuer.GetValue(), id, active)
 }

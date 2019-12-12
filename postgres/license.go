@@ -105,6 +105,35 @@ func (repo licenseRepository) Update(ctx context.Context, l license.License) err
 	return nil
 }
 
+func (repo licenseRepository) ChangeActive(ctx context.Context, issuer, id string, active bool) error {
+	q := `UPDATE licenses SET active = $1
+		  WHERE issuer = $2 AND id = $3;`
+
+	res, err := repo.db.ExecContext(ctx, q, active, issuer, id)
+	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			switch pqErr.Code.Name() {
+			case errInvalid, errTruncation:
+				return errors.Wrap(license.ErrMalformedEntity, err)
+			}
+		}
+
+		return err
+	}
+
+	cnt, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if cnt == 0 {
+		return license.ErrNotFound
+	}
+
+	return nil
+}
+
 func (repo licenseRepository) Remove(ctx context.Context, issuer, id string) error {
 	q := `DELETE FROM licenses WHERE issuer = $1 AND id = $2`
 

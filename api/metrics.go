@@ -29,38 +29,47 @@ func MetricsMiddleware(svc license.Service, counter metrics.Counter, latency met
 	}
 }
 
-func (ms *metricsMiddleware) CreateLicense(ctx context.Context, token string, l license.License) (id string, err error) {
+func (ms *metricsMiddleware) Create(ctx context.Context, token string, l license.License) (id string, err error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "create_license").Add(1)
-		ms.latency.With("method", "create_license").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "create").Add(1)
+		ms.latency.With("method", "create").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.CreateLicense(ctx, token, l)
+	return ms.svc.Create(ctx, token, l)
 }
 
-func (ms *metricsMiddleware) RetrieveLicense(ctx context.Context, owner, id string) (l license.License, err error) {
+func (ms *metricsMiddleware) Retrieve(ctx context.Context, owner, id string) (l license.License, err error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "retrieve_license").Add(1)
-		ms.latency.With("method", "retrieve_license").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "retrieve").Add(1)
+		ms.latency.With("method", "retrieve").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.RetrieveLicense(ctx, owner, id)
+	return ms.svc.Retrieve(ctx, owner, id)
 }
 
-func (ms *metricsMiddleware) UpdateLicense(ctx context.Context, token string, l license.License) (err error) {
+func (ms *metricsMiddleware) Update(ctx context.Context, token string, l license.License) (err error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "update_license").Add(1)
-		ms.latency.With("method", "update_license").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "update").Add(1)
+		ms.latency.With("method", "update").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.UpdateLicense(ctx, token, l)
+	return ms.svc.Update(ctx, token, l)
 }
 
-func (ms *metricsMiddleware) RemoveLicense(ctx context.Context, owner, id string) (err error) {
+func (ms *metricsMiddleware) Remove(ctx context.Context, owner, id string) (err error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "remove_license").Add(1)
-		ms.latency.With("method", "remove_license").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "remove").Add(1)
+		ms.latency.With("method", "remove").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.RemoveLicense(ctx, owner, id)
+	return ms.svc.Remove(ctx, owner, id)
+}
+
+func (ms *metricsMiddleware) ChangeActive(ctx context.Context, token, id string, active bool) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "change_active").Add(1)
+		ms.latency.With("method", "change_active").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.ChangeActive(ctx, token, id, active)
 }
