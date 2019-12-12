@@ -105,10 +105,10 @@ func (repo licenseRepository) Update(ctx context.Context, l license.License) err
 	return nil
 }
 
-func (repo licenseRepository) Remove(ctx context.Context, owner, id string) error {
+func (repo licenseRepository) Remove(ctx context.Context, issuer, id string) error {
 	q := `DELETE FROM licenses WHERE issuer = $1 AND id = $2`
 
-	if _, err := repo.db.ExecContext(ctx, q, owner, id); err != nil {
+	if _, err := repo.db.ExecContext(ctx, q, issuer, id); err != nil {
 		return err
 	}
 

@@ -24,14 +24,14 @@ type License struct {
 // Repository specifies a License persistence API.
 type Repository interface {
 	// Save stores a License.
-	Save(context.Context, License) (string, error)
+	Save(ctx context.Context, l License) (string, error)
 
 	// Retrieve the License by given ID that belongs to the given owner.
-	Retrieve(context.Context, string, string) (License, error)
+	Retrieve(ctx context.Context, issuer, id string) (License, error)
 
 	// Update an existing License.
-	Update(context.Context, License) error
+	Update(ctx context.Context, l License) error
 
 	// Remove a License with the given ID that belongs to the given owner.
-	Remove(context.Context, string, string) error
+	Remove(ctx context.Context, issuer, id string) error
 }

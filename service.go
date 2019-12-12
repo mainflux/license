@@ -24,18 +24,18 @@ var (
 type Service interface {
 	// CreateLicense adds License that belongs to the
 	// user identified by the provided key.
-	CreateLicense(context.Context, string, License) (string, error)
+	CreateLicense(ctx context.Context, token string, l License) (string, error)
 
 	// RetrieveLicense retrieves the License by given ID that belongs to
-	//  the user identified by the provided key.
-	RetrieveLicense(context.Context, string, string) (License, error)
+	//  the user identified by the provided token.
+	RetrieveLicense(ctx context.Context, token, id string) (License, error)
 
 	// UpdateLicense updates an existing License.
-	UpdateLicense(context.Context, License) error
+	UpdateLicense(ctx context.Context, l License) error
 
 	// RemoveLicense removes a License with the given ID
 	// that belongs to the given owner.
-	RemoveLicense(context.Context, string, string) error
+	RemoveLicense(ctx context.Context, token, id string) error
 }
 
 type licenseService struct {
@@ -74,14 +74,22 @@ func (svc licenseService) CreateLicense(ctx context.Context, token string, l Lic
 	return svc.repo.Save(ctx, l)
 }
 
-func (svc licenseService) RetrieveLicense(ctx context.Context, id, owner string) (License, error) {
-	return svc.repo.Retrieve(ctx, id, owner)
+func (svc licenseService) RetrieveLicense(ctx context.Context, token, id string) (License, error) {
+	issuer, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return License{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return svc.repo.Retrieve(ctx, issuer.GetValue(), id)
 }
 
 func (svc licenseService) UpdateLicense(ctx context.Context, l License) error {
 	return svc.repo.Update(ctx, l)
 }
 
-func (svc licenseService) RemoveLicense(ctx context.Context, id, owner string) error {
-	return svc.repo.Remove(ctx, id, owner)
+func (svc licenseService) RemoveLicense(ctx context.Context, token, id string) error {
+	issuer, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return svc.repo.Remove(ctx, issuer.GetValue(), id)
 }

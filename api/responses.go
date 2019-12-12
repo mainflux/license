@@ -35,7 +35,6 @@ type licenseRes struct {
 	Expires  time.Time              `json:"expires,omitempty"`
 	Duration uint                   `json:"duration,omitempty"`
 	Active   bool                   `json:"active,omitempty"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
 	Plan     map[string]interface{} `json:"plan,omitempty"`
 	created  bool
 }
