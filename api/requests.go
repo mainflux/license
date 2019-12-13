@@ -4,8 +4,15 @@
 package api
 
 import (
-	"github.com/mainflux/license"
 	"time"
+
+	"github.com/mainflux/license"
+	"github.com/mainflux/license/errors"
+)
+
+var (
+	errEmptyServices = errors.New("the list of services must not be empty")
+	errEmptyDeviceID = errors.New("device id must not be empty")
 )
 
 type apiReq interface {
@@ -28,6 +35,7 @@ type createReq struct {
 	token    string
 	Duration time.Duration          `json:"duration,omitempty"`
 	Services []string               `json:"services,omitempty"`
+	DeviceID string                 `json:"device_id,omitempty"`
 	Plan     map[string]interface{} `json:"plan,omitempty"`
 }
 
@@ -36,7 +44,11 @@ func (req createReq) validate() error {
 		return license.ErrUnauthorizedAccess
 	}
 	if req.Services == nil || len(req.Services) == 0 {
-		return license.ErrMalformedEntity
+		return errors.Wrap(errEmptyServices, license.ErrMalformedEntity)
+	}
+
+	if req.DeviceID == "" {
+		return errors.Wrap(errEmptyDeviceID, license.ErrMalformedEntity)
 	}
 
 	return nil
@@ -58,7 +70,7 @@ func (req updateReq) validate() error {
 		return license.ErrNotFound
 	}
 	if req.Services == nil || len(req.Services) == 0 {
-		return license.ErrUnauthorizedAccess
+		return errors.Wrap(errEmptyServices, license.ErrMalformedEntity)
 	}
 
 	return nil

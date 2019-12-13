@@ -10,6 +10,7 @@ import "context"
 // License represents single license object.
 type License struct {
 	ID        string
+	Key       string
 	Issuer    string
 	DeviceID  string
 	Active    bool

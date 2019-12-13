@@ -27,7 +27,7 @@ const contentType = "application/json"
 
 var (
 	errUnsupportedContentType = errors.New("unsupported content type")
-	errInvalidQueryParams     = errors.New("invalid query params")
+	// errInvalidQueryParams     = errors.New("invalid query params")
 
 	logger log.Logger
 )
@@ -169,8 +169,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch err {
 	case errUnsupportedContentType:
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errInvalidQueryParams:
-		w.WriteHeader(http.StatusBadRequest)
+	// case errInvalidQueryParams:
+	// 	w.WriteHeader(http.StatusBadRequest)
 	case io.ErrUnexpectedEOF:
 		w.WriteHeader(http.StatusBadRequest)
 	case io.EOF:

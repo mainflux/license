@@ -32,8 +32,8 @@ func New(db Database) license.Repository {
 }
 
 func (repo licenseRepository) Save(ctx context.Context, l license.License) (string, error) {
-	q := `INSERT INTO licenses (id, issuer, device_id, created_at, expires_at, updated_at, updated_by, services, plan)
-          VALUES (:id, :issuer, :device_id, :created_at, :expires_at, :updated_at, :updated_by, :services, :plan)`
+	q := `INSERT INTO licenses (id, key, issuer, device_id, created_at, expires_at, updated_at, updated_by, services, plan)
+          VALUES (:id, :key, :issuer, :device_id, :created_at, :expires_at, :updated_at, :updated_by, :services, :plan)`
 
 	dbl, err := toDBLicense(l)
 	if err != nil {
@@ -55,7 +55,7 @@ func (repo licenseRepository) Save(ctx context.Context, l license.License) (stri
 }
 
 func (repo licenseRepository) Retrieve(ctx context.Context, issuer, id string) (license.License, error) {
-	q := `SELECT id, issuer, device_id, created_at, expires_at, updated_at, updated_by, services, plan FROM licenses WHERE issuer = $1 AND id = $2`
+	q := `SELECT id, key, issuer, device_id, created_at, expires_at, updated_at, updated_by, services, plan FROM licenses WHERE issuer = $1 AND id = $2`
 	dbl := dbLicense{
 		ID:     id,
 		Issuer: issuer,
@@ -146,6 +146,7 @@ func (repo licenseRepository) Remove(ctx context.Context, issuer, id string) err
 
 type dbLicense struct {
 	ID        string         `db:"id"`
+	Key       string         `db:"key"`
 	Issuer    string         `db:"issuer"`
 	DeviceID  string         `db:"device_id"`
 	Active    bool           `db:"active"`
@@ -169,6 +170,7 @@ func toDBLicense(l license.License) (dbLicense, error) {
 
 	return dbLicense{
 		ID:        l.ID,
+		Key:       l.Key,
 		Issuer:    l.Issuer,
 		DeviceID:  l.DeviceID,
 		Active:    l.Active,
@@ -188,6 +190,7 @@ func toLicense(l dbLicense) (license.License, error) {
 	}
 	return license.License{
 		ID:        l.ID,
+		Key:       l.Key,
 		Issuer:    l.Issuer,
 		DeviceID:  l.DeviceID,
 		Active:    l.Active,

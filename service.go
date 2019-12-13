@@ -74,6 +74,11 @@ func (svc licenseService) Create(ctx context.Context, token string, l License) (
 		return "", err
 	}
 
+	l.Key, err = svc.idp.ID()
+	if err != nil {
+		return "", err
+	}
+
 	l.Issuer = issuer.GetValue()
 	l.UpdatedAt = l.CreatedAt
 	l.UpdatedBy = l.Issuer

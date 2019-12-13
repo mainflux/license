@@ -16,10 +16,12 @@ func createEndpoint(svc license.Service) endpoint.Endpoint {
 		req := request.(createReq)
 
 		if err := req.validate(); err != nil {
+			logger.Warn(err.Error())
 			return nil, err
 		}
 
 		l := license.License{
+			DeviceID:  req.DeviceID,
 			Services:  req.Services,
 			Plan:      req.Plan,
 			CreatedAt: time.Now().UTC(),
@@ -45,6 +47,7 @@ func viewEndpoint(svc license.Service) endpoint.Endpoint {
 		req := request.(licenseReq)
 
 		if err := req.validate(); err != nil {
+			logger.Warn(err.Error())
 			return nil, err
 		}
 
@@ -75,6 +78,7 @@ func updateEndpoint(svc license.Service) endpoint.Endpoint {
 		req := request.(updateReq)
 
 		if err := req.validate(); err != nil {
+			logger.Warn(err.Error())
 			return nil, err
 		}
 
@@ -99,6 +103,7 @@ func removeEndpoint(svc license.Service) endpoint.Endpoint {
 		req := request.(licenseReq)
 
 		if err := req.validate(); err != nil {
+			logger.Warn(err.Error())
 			return nil, err
 		}
 
@@ -116,6 +121,7 @@ func activationEndpoint(svc license.Service, active bool) endpoint.Endpoint {
 		req := request.(licenseReq)
 
 		if err := req.validate(); err != nil {
+			logger.Warn(err.Error())
 			return nil, err
 		}
 

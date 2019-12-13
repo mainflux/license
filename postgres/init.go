@@ -51,7 +51,8 @@ func migrateDB(db *sqlx.DB) error {
 					`CREATE TABLE IF NOT EXISTS licenses (
 						id         UUID,
 						issuer     VARCHAR(254),
-						device_id  TEXT,
+						key        TEXT NOT NULL,
+						device_id  TEXT NOT NULL,
 						active     BOOLEAN DEFAULT FALSE,
 						created_at TIMESTAMP NOT NULL,
 						expires_at TIMESTAMP,
