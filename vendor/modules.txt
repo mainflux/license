@@ -32,12 +32,11 @@ github.com/kr/logfmt
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/mainflux/mainflux v0.0.0-20191129194728-8c4da8503963
+# github.com/mainflux/mainflux v0.0.0-20191216170559-9c1743c08060
 github.com/mainflux/mainflux
-github.com/mainflux/mainflux/errors
+github.com/mainflux/mainflux/authn
+github.com/mainflux/mainflux/authn/api/grpc
 github.com/mainflux/mainflux/logger
-github.com/mainflux/mainflux/users
-github.com/mainflux/mainflux/users/api/grpc
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/opentracing/opentracing-go v1.1.0

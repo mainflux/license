@@ -13,12 +13,13 @@ service ThingsService {
     rpc Identify(Token) returns (ThingID) {}
 }
 
-service UsersService {
+service AuthNService {
+    rpc Issue(IssueReq) returns (Token) {}
     rpc Identify(Token) returns (UserID) {}
 }
 
 message AccessByKeyReq {
-    string token = 1;
+    string token  = 1;
     string chanID = 2;
 }
 
@@ -28,13 +29,21 @@ message ThingID {
 
 message AccessByIDReq {
     string thingID = 1;
-    string chanID = 2;
+    string chanID  = 2;
 }
 
+// If a token is not carrying any information itself, the type
+// field can be used to determine how to validate the token.
+// Also, different tokens can be encoded in different ways.
 message Token {
     string value = 1;
 }
 
 message UserID {
     string value = 1;
+}
+
+message IssueReq {
+    string issuer = 1;
+    uint32 type   = 2;
 }

@@ -11,8 +11,8 @@ import (
 	"github.com/mainflux/license/postgres"
 	uuid "github.com/mainflux/license/uuid"
 	mainflux "github.com/mainflux/mainflux"
+	authapi "github.com/mainflux/mainflux/authn/api/grpc"
 	mflog "github.com/mainflux/mainflux/logger"
-	authapi "github.com/mainflux/mainflux/users/api/grpc"
 	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
@@ -189,7 +189,7 @@ func initJaeger(svcName, url string, logger mflog.Logger) (opentracing.Tracer, i
 	return tracer, closer
 }
 
-func newService(auth mainflux.UsersServiceClient, db *sqlx.DB, logger mflog.Logger, cfg config) license.Service {
+func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, cfg config) license.Service {
 	licenseRepo := postgres.New(db)
 	idp := uuid.New()
 

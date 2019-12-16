@@ -53,11 +53,11 @@ type Service interface {
 type licenseService struct {
 	repo Repository
 	idp  IdentityProvider
-	auth mainflux.UsersServiceClient
+	auth mainflux.AuthNServiceClient
 }
 
 // New returns new instance of License Service.
-func New(repo Repository, idp IdentityProvider, auth mainflux.UsersServiceClient) Service {
+func New(repo Repository, idp IdentityProvider, auth mainflux.AuthNServiceClient) Service {
 	return licenseService{
 		repo: repo,
 		idp:  idp,
