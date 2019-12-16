@@ -88,3 +88,15 @@ func (lm *loggingMiddleware) ChangeActive(ctx context.Context, token, id string,
 
 	return lm.svc.ChangeActive(ctx, token, id, active)
 }
+
+func (lm *loggingMiddleware) Validate(ctx context.Context, svc, id string, payload []byte) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method validate for license %s and service %s took %s to complete", id, svc, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+	return lm.svc.Validate(ctx, svc, id, payload)
+}

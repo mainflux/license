@@ -4,7 +4,10 @@
 package license
 
 import (
+	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	errs "errors"
 	"time"
 
@@ -42,6 +45,9 @@ type Service interface {
 	// ChangeActive a License with the given ID
 	// that belongs to the given issuer.
 	ChangeActive(ctx context.Context, token, id string, active bool) error
+
+	// Validate checks if the license is valid for the given service.
+	Validate(ctx context.Context, svc, id string, payload []byte) error
 }
 
 type licenseService struct {
@@ -120,4 +126,27 @@ func (svc licenseService) ChangeActive(ctx context.Context, token, id string, ac
 	}
 
 	return svc.repo.ChangeActive(ctx, issuer.GetValue(), id, active)
+}
+
+func (svc licenseService) Validate(ctx context.Context, name, id string, payload []byte) error {
+	l, err := svc.repo.RetrieveByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	h := hmac.New(sha256.New, []byte(l.Key))
+	if _, err := h.Write([]byte(l.DeviceID)); err != nil {
+		return ErrMalformedEntity
+	}
+	if bytes.Compare(payload, h.Sum(nil)) != 0 {
+		return ErrMalformedEntity
+	}
+
+	for _, s := range l.Services {
+		if s == name {
+			return nil
+		}
+	}
+
+	return ErrNotFound
 }

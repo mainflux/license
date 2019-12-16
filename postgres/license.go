@@ -72,6 +72,23 @@ func (repo licenseRepository) Retrieve(ctx context.Context, issuer, id string) (
 	return toLicense(dbl)
 }
 
+func (repo licenseRepository) RetrieveByID(ctx context.Context, id string) (license.License, error) {
+	q := `SELECT id, key, issuer, device_id, created_at, expires_at, updated_at, updated_by, services, plan FROM licenses WHERE id = $1`
+	dbl := dbLicense{
+		ID: id,
+	}
+	if err := repo.db.QueryRowxContext(ctx, q, id).StructScan(&dbl); err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
+			return license.License{}, errors.Wrap(license.ErrNotFound, err)
+		}
+
+		return license.License{}, err
+	}
+
+	return toLicense(dbl)
+}
+
 func (repo licenseRepository) Update(ctx context.Context, l license.License) error {
 	q := `UPDATE licenses SET plan = :plan, services = :services, updated_at = :updated_at, updated_by = :updated_by
 		  WHERE issuer = :issuer AND id = :id;`

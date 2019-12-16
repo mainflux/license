@@ -27,7 +27,6 @@ const contentType = "application/json"
 
 var (
 	errUnsupportedContentType = errors.New("unsupported content type")
-	// errInvalidQueryParams     = errors.New("invalid query params")
 
 	logger log.Logger
 )
@@ -66,6 +65,13 @@ func MakeHandler(tracer opentracing.Tracer, l log.Logger, svc license.Service) h
 	r.Delete("/licenses/:id", kithttp.NewServer(
 		kitot.TraceServer(tracer, "remove_license")(removeEndpoint(svc)),
 		decodeView,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Post("/licenses/validate/:id", kithttp.NewServer(
+		kitot.TraceServer(tracer, "validate_license")(validateEndpoint(svc)),
+		decodeValidate,
 		encodeResponse,
 		opts...,
 	))
@@ -132,6 +138,36 @@ func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
+func decodeActivation(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, errUnsupportedContentType
+	}
+
+	req := licenseReq{
+		token: r.Header.Get("Authorization"),
+		id:    bone.GetValue(r, "id"),
+	}
+
+	return req, nil
+}
+
+func decodeValidate(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, errUnsupportedContentType
+	}
+
+	req := validateReq{
+		service: r.URL.Query().Get("service"),
+		id:      bone.GetValue(r, "id"),
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", contentType)
 
@@ -150,27 +186,12 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 	return json.NewEncoder(w).Encode(response)
 }
 
-func decodeActivation(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
-	}
-
-	req := licenseReq{
-		token: r.Header.Get("Authorization"),
-		id:    bone.GetValue(r, "id"),
-	}
-
-	return req, nil
-}
-
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", contentType)
 
 	switch err {
 	case errUnsupportedContentType:
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-	// case errInvalidQueryParams:
-	// 	w.WriteHeader(http.StatusBadRequest)
 	case io.ErrUnexpectedEOF:
 		w.WriteHeader(http.StatusBadRequest)
 	case io.EOF:

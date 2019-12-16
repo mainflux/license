@@ -30,6 +30,9 @@ type Repository interface {
 	// Retrieve the License by given ID that belongs to the given owner.
 	Retrieve(ctx context.Context, issuer, id string) (License, error)
 
+	// RetrieveByID retrives the license by ID.
+	RetrieveByID(ctx context.Context, id string) (License, error)
+
 	// Update an existing License.
 	Update(ctx context.Context, l License) error
 

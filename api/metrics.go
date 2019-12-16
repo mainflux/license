@@ -73,3 +73,12 @@ func (ms *metricsMiddleware) ChangeActive(ctx context.Context, token, id string,
 
 	return ms.svc.ChangeActive(ctx, token, id, active)
 }
+
+func (ms *metricsMiddleware) Validate(ctx context.Context, svc, id string, payload []byte) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "validate").Add(1)
+		ms.latency.With("method", "validate").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.Validate(ctx, svc, id, payload)
+}

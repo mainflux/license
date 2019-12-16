@@ -116,6 +116,23 @@ func removeEndpoint(svc license.Service) endpoint.Endpoint {
 	}
 }
 
+func validateEndpoint(svc license.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(validateReq)
+
+		if err := req.validate(); err != nil {
+			logger.Warn(err.Error())
+			return nil, err
+		}
+
+		if err := svc.Validate(ctx, req.service, req.id, req.Payload); err != nil {
+			return nil, err
+		}
+
+		return successRes{}, nil
+	}
+}
+
 func activationEndpoint(svc license.Service, active bool) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(licenseReq)
