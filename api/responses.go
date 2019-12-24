@@ -58,6 +58,16 @@ type licenseRes struct {
 	Plan      map[string]interface{} `json:"plan,omitempty"`
 }
 
+type fetchRes struct {
+	licenseRes
+	Signature []byte `json:"signature,omitempty"`
+}
+
+type vewRes struct {
+	licenseRes
+	Key string `json:"key,omitempty"`
+}
+
 func (res licenseRes) Code() int {
 	if res.created {
 		return http.StatusCreated

@@ -47,6 +47,9 @@ func (req createReq) validate() error {
 	if req.Services == nil || len(req.Services) == 0 {
 		return errors.Wrap(errEmptyServices, license.ErrMalformedEntity)
 	}
+	if req.Duration == 0 {
+		return license.ErrExpired
+	}
 
 	if req.DeviceID == "" {
 		return errors.Wrap(errEmptyDeviceID, license.ErrMalformedEntity)

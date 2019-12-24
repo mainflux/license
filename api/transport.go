@@ -48,8 +48,15 @@ func MakeHandler(tracer opentracing.Tracer, l log.Logger, svc license.Service) h
 		opts...,
 	))
 
-	r.Get("/licenses/:id", kithttp.NewServer(
+	r.Get("/licenses/view/:id", kithttp.NewServer(
 		kitot.TraceServer(tracer, "view_license")(viewEndpoint(svc)),
+		decodeView,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Get("/licenses/:id", kithttp.NewServer(
+		kitot.TraceServer(tracer, "fetch_license")(fetchEndpoint(svc)),
 		decodeView,
 		encodeResponse,
 		opts...,
@@ -200,7 +207,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch e := err.(type) {
 	case errors.Error:
 		switch {
-		case errors.Contains(e, license.ErrMalformedEntity):
+		case errors.Contains(e, license.ErrMalformedEntity), errors.Contains(e, license.ErrExpired):
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(e, license.ErrUnauthorizedAccess):
 			w.WriteHeader(http.StatusForbidden)

@@ -3,23 +3,39 @@
 
 package license
 
-import "time"
+import (
+	"context"
+	"time"
 
-import "context"
+	"github.com/mainflux/license/errors"
+)
 
 // License represents single license object.
 type License struct {
-	ID        string
-	Key       string
-	Issuer    string
-	DeviceID  string
-	Active    bool
-	CreatedAt time.Time
-	ExpiresAt time.Time
-	UpdatedBy string
-	UpdatedAt time.Time
-	Services  []string
-	Plan      map[string]interface{}
+	ID        string                 `json:"id"`
+	Key       string                 `json:"key"`
+	Issuer    string                 `json:"issuer"`
+	DeviceID  string                 `json:"device_id"`
+	Active    bool                   `json:"active"`
+	CreatedAt time.Time              `json:"created_at"`
+	ExpiresAt time.Time              `json:"expires_at"`
+	UpdatedBy string                 `json:"updated_by"`
+	UpdatedAt time.Time              `json:"updated_at"`
+	Services  []string               `json:"services"`
+	Plan      map[string]interface{} `json:"plan"`
+	Signature []byte                 `json:"signature"`
+}
+
+// Validate validates the license.
+func (l License) Validate() error {
+	now := time.Now().UTC()
+	if l.ExpiresAt.UTC().Before(now) {
+		return ErrExpired
+	}
+	if l.CreatedAt.UTC().After(now) {
+		return errors.Wrap(ErrMalformedEntity, errIssuedAt)
+	}
+	return nil
 }
 
 // Repository specifies a License persistence API.

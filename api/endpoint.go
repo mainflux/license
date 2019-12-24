@@ -56,18 +56,55 @@ func viewEndpoint(svc license.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		res := licenseRes{
-			ID:        l.ID,
-			created:   false,
-			Issuer:    l.Issuer,
-			DeviceID:  l.DeviceID,
-			Active:    l.Active,
-			CreatedAt: &l.CreatedAt,
-			ExpiresAt: &l.ExpiresAt,
-			UpdatedAt: &l.UpdatedAt,
-			UpdatedBy: l.UpdatedBy,
-			Services:  l.Services,
-			Plan:      l.Plan,
+		res := vewRes{
+			licenseRes: licenseRes{
+				ID:        l.ID,
+				created:   false,
+				Issuer:    l.Issuer,
+				DeviceID:  l.DeviceID,
+				Active:    l.Active,
+				CreatedAt: &l.CreatedAt,
+				ExpiresAt: &l.ExpiresAt,
+				UpdatedAt: &l.UpdatedAt,
+				UpdatedBy: l.UpdatedBy,
+				Services:  l.Services,
+				Plan:      l.Plan,
+			},
+			Key: l.Key,
+		}
+		return res, nil
+	}
+}
+
+func fetchEndpoint(svc license.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(licenseReq)
+
+		if err := req.validate(); err != nil {
+			logger.Warn(err.Error())
+			return nil, err
+		}
+
+		l, err := svc.Fetch(ctx, req.token, req.id)
+		if err != nil {
+			return nil, err
+		}
+
+		res := fetchRes{
+			licenseRes: licenseRes{
+				ID:        l.ID,
+				created:   false,
+				Issuer:    l.Issuer,
+				DeviceID:  l.DeviceID,
+				Active:    l.Active,
+				CreatedAt: &l.CreatedAt,
+				ExpiresAt: &l.ExpiresAt,
+				UpdatedAt: &l.UpdatedAt,
+				UpdatedBy: l.UpdatedBy,
+				Services:  l.Services,
+				Plan:      l.Plan,
+			},
+			Signature: l.Signature,
 		}
 		return res, nil
 	}

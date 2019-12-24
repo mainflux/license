@@ -50,6 +50,19 @@ func (lm *loggingMiddleware) Retrieve(ctx context.Context, owner, id string) (l 
 	return lm.svc.Retrieve(ctx, owner, id)
 }
 
+func (lm *loggingMiddleware) Fetch(ctx context.Context, key, id string) (l license.License, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method fetch with ID %s took %s to complete", id, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.Fetch(ctx, key, id)
+}
+
 func (lm *loggingMiddleware) Update(ctx context.Context, token string, l license.License) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update with ID %s took %s to complete", l.ID, time.Since(begin))
