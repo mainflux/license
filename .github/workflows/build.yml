@@ -11,5 +11,7 @@ jobs:
         go-version: 1.13
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
-    - name: build
-      run: go build -ldflags "-s -w" -o build/mainflux-license cmd/main.go
+    - name: build_svc
+      run: go build -ldflags "-s -w" -o build/mainflux-license-svc cmd/service/main.go
+    - name: build_agent
+      run: go build -ldflags "-s -w" -o build/mainflux-license-agent cmd/agent/main.go

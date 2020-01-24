@@ -33,7 +33,7 @@ func (l License) Validate() error {
 		return ErrExpired
 	}
 	if l.CreatedAt.UTC().After(now) {
-		return errors.Wrap(ErrMalformedEntity, errIssuedAt)
+		return errors.Wrap(ErrMalformedEntity, ErrIssuedAt)
 	}
 	return nil
 }

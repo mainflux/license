@@ -4,20 +4,6 @@ package main
 
 import (
 	"fmt"
-	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/license"
-	api "github.com/mainflux/license/api"
-	"github.com/mainflux/license/postgres"
-	uuid "github.com/mainflux/license/uuid"
-	mainflux "github.com/mainflux/mainflux"
-	authapi "github.com/mainflux/mainflux/authn/api/grpc"
-	mflog "github.com/mainflux/mainflux/logger"
-	opentracing "github.com/opentracing/opentracing-go"
-	stdprometheus "github.com/prometheus/client_golang/prometheus"
-	jconfig "github.com/uber/jaeger-client-go/config"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"io"
 	"io/ioutil"
 	"log"
@@ -27,6 +13,22 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/jmoiron/sqlx"
+	"github.com/mainflux/license"
+	mflicense "github.com/mainflux/license/service"
+	api "github.com/mainflux/license/service/api"
+	"github.com/mainflux/license/service/postgres"
+	uuid "github.com/mainflux/license/service/uuid"
+	mainflux "github.com/mainflux/mainflux"
+	authapi "github.com/mainflux/mainflux/authn/api/grpc"
+	mflog "github.com/mainflux/mainflux/logger"
+	opentracing "github.com/opentracing/opentracing-go"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	jconfig "github.com/uber/jaeger-client-go/config"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -125,6 +127,7 @@ func loadConfig() config {
 	if err != nil {
 		tls = false
 	}
+
 	dbConfig := postgres.Config{
 		Host:        mainflux.Env(envDBHost, defDBHost),
 		Port:        mainflux.Env(envDBPort, defDBPort),
@@ -193,7 +196,7 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 	licenseRepo := postgres.New(db)
 	idp := uuid.New()
 
-	svc := license.New(licenseRepo, idp, auth)
+	svc := mflicense.New(licenseRepo, idp, auth)
 	svc = api.NewLoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
