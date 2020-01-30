@@ -48,9 +48,9 @@ func (lm *loggingMiddleware) Save() (err error) {
 	return lm.agent.Save()
 }
 
-func (lm *loggingMiddleware) Validate(services []string) (err error) {
+func (lm *loggingMiddleware) Validate(svcName, client string) (res []byte, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method validate for service %v took %s to complete", services, time.Since(begin))
+		message := fmt.Sprintf("Method validate for service %s took %s to complete", svcName, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -58,7 +58,7 @@ func (lm *loggingMiddleware) Validate(services []string) (err error) {
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.agent.Validate(services)
+	return lm.agent.Validate(svcName, client)
 }
 
 func (lm *loggingMiddleware) Do() {
