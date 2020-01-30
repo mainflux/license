@@ -19,7 +19,7 @@ func validateEndpoint(agent license.Agent) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := agent.Validate([]string{req.service}); err != nil {
+		if err := agent.Validate(req.service); err != nil {
 			return nil, err
 		}
 

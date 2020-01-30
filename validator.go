@@ -6,8 +6,8 @@ package license
 // Handler handles validation response.
 type Handler func(error)
 
-// Client represents licensing service client API specification.
-type Client interface {
+// Validator represents licensing service validator specification.
+type Validator interface {
 	// Validate validates service against provided license.
-	Validate(svcName string)
+	Validate(svcName string) error
 }

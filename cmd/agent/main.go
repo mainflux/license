@@ -62,7 +62,7 @@ func main() {
 
 	cfg.licenseID = addresses(logger)
 	c := crypto.New()
-	a := agent.New(cfg.svcURL, cfg.licenseFile, cfg.licenseID, cfg.licenseKey, c)
+	a := agent.New(cfg.svcURL, cfg.licenseFile, cfg.licenseID, cfg.licenseKey, c, nil)
 	a = api.NewLoggingMiddleware(a, logger)
 	go a.Do()
 	for {

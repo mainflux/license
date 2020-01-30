@@ -25,7 +25,7 @@ type action uint
 
 type command struct {
 	action action
-	params []string
+	param  string
 }
 
 const (
@@ -35,26 +35,28 @@ const (
 )
 
 type agent struct {
-	svcURL   string
-	location string
-	id       string
-	key      string
-	commands chan command
-	errs     chan error
-	license  *license.License
-	crypto   license.Crypto
+	svcURL    string
+	location  string
+	id        string
+	key       string
+	license   *license.License
+	crypto    license.Crypto
+	validator license.Validator
+	commands  chan command
+	errs      chan error
 }
 
 // New returns new License agent.
-func New(svcURL, location string, id, key string, crypto license.Crypto) license.Agent {
+func New(svcURL, location string, id, key string, crypto license.Crypto, validator license.Validator) license.Agent {
 	return &agent{
-		svcURL:   svcURL,
-		location: location,
-		id:       id,
-		key:      key,
-		commands: make(chan command),
-		errs:     make(chan error),
-		crypto:   crypto,
+		svcURL:    svcURL,
+		location:  location,
+		id:        id,
+		key:       key,
+		crypto:    crypto,
+		validator: validator,
+		commands:  make(chan command),
+		errs:      make(chan error),
 	}
 }
 
@@ -70,7 +72,7 @@ func (a *agent) Do() {
 				a.license = &l
 			}
 		case validate:
-			err = a.validate(cmd.params)
+			err = a.validate(cmd.param)
 		case write:
 			err = a.save()
 		}
@@ -79,15 +81,22 @@ func (a *agent) Do() {
 }
 
 func (a *agent) Load() error {
-	return a.command(read)
+	a.commands <- command{action: read}
+	return <-a.errs
 }
 
 func (a *agent) Save() error {
-	return a.command(write)
+	a.commands <- command{action: write}
+	return <-a.errs
 }
 
-func (a *agent) Validate(services []string) error {
-	return a.command(validate, services...)
+func (a *agent) Validate(service string) error {
+	cmd := command{
+		action: validate,
+		param:  service,
+	}
+	a.commands <- cmd
+	return <-a.errs
 }
 
 // Unlike their exported counterparts, methods load, save, and validate are not thread-safe.
@@ -132,33 +141,22 @@ func (a *agent) save() error {
 	return nil
 }
 
-func (a *agent) validate(params []string) error {
+func (a *agent) validate(svcName string) error {
 	if a.license == nil {
 		return errors.Wrap(license.ErrLicenseValidation, errLicenseNotLoaded)
 	}
 	if err := a.license.Validate(); err != nil {
 		return err
 	}
-	valid := true
-	for _, p := range params {
-		if !exists(p, a.license.Services) {
-			valid = false
-			break
+	for _, svc := range a.license.Services {
+		if svcName == svc {
+			if a.validator != nil {
+				return a.validator.Validate(svcName)
+			}
+			return nil
 		}
 	}
-	if !valid {
-		return errors.Wrap(license.ErrLicenseValidation, errServiceNotAllowed)
-	}
-	return nil
-}
-
-func (a *agent) command(act action, params ...string) error {
-	cmd := command{
-		action: act,
-		params: params,
-	}
-	a.commands <- cmd
-	return <-a.errs
+	return errors.Wrap(license.ErrLicenseValidation, errServiceNotAllowed)
 }
 
 func (a *agent) fetch() ([]byte, error) {
