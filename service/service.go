@@ -126,6 +126,7 @@ func (svc licenseService) Remove(ctx context.Context, token, id string) error {
 	if err != nil {
 		return errors.Wrap(license.ErrUnauthorizedAccess, err)
 	}
+
 	return svc.repo.Remove(ctx, issuer.GetValue(), id)
 }
 

@@ -30,6 +30,7 @@ const (
 	defServerCert  = ""
 	defServerKey   = ""
 	defPort        = "3000"
+	defLoadWait    = "60"
 
 	envLogLevel    = "MF_LICENSE_LOG_LEVEL"
 	envSvcURL      = "MF_LICENSE_SERVICE_URL"
@@ -38,6 +39,7 @@ const (
 	envServerCert  = "MF_LICENSE_SERVER_CERT"
 	envServerKey   = "MF_AGENT_SERVER_KEY"
 	envPort        = "MF_AGENT_PORT"
+	envLoadWait    = "MF_AGENT_LOAD_RETRY_SECONDS"
 )
 
 type config struct {
@@ -50,6 +52,7 @@ type config struct {
 	serverCert  string
 	serverKey   string
 	port        string
+	loadWait    int64
 }
 
 func main() {
@@ -68,7 +71,7 @@ func main() {
 	for {
 		logger.Info("Loading the license...")
 		if err := a.Load(); err != nil {
-			time.Sleep(time.Second)
+			time.Sleep(time.Second * time.Duration(cfg.loadWait))
 			continue
 		}
 		break
@@ -93,6 +96,10 @@ func loadConfig() config {
 	if err != nil {
 		tls = false
 	}
+	wait, err := strconv.ParseInt(mainflux.Env(envLoadWait, defLoadWait), 10, 64)
+	if err != nil {
+		wait = 60
+	}
 
 	return config{
 		svcURL:      mainflux.Env(envSvcURL, defSvcURL),
@@ -102,6 +109,7 @@ func loadConfig() config {
 		serverCert:  mainflux.Env(envServerCert, defServerCert),
 		serverKey:   mainflux.Env(envServerKey, defServerKey),
 		port:        mainflux.Env(envPort, defPort),
+		loadWait:    wait,
 	}
 }
 
