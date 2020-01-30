@@ -11,7 +11,8 @@ var ErrLicenseValidation = errors.New("license validation failed")
 // Agent represents licensing agent.
 // Licensing Agent is a service that handles License locally.
 type Agent interface {
-	Validator
+	// Validate validates service.
+	Validate(svcName, client string) ([]byte, error)
 
 	// Load reads License from the location.
 	Load() error

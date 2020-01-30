@@ -10,21 +10,14 @@ import (
 
 var errEmptyPayload = errors.New("validation payload must not be empty")
 
-type validateReq struct {
-	id      string
-	service string
-	Payload []byte `json:"payload,omitempty"`
+type validationReq struct {
+	svcID  string
+	client string
 }
 
-func (req validateReq) validate() error {
-	if req.id == "" {
+func (req validationReq) validate() error {
+	if req.svcID == "" || req.client == "" {
 		return license.ErrNotFound
-	}
-	if req.service == "" {
-		return license.ErrMalformedEntity
-	}
-	if req.Payload == nil || len(req.Payload) == 0 {
-		return errors.Wrap(errEmptyPayload, license.ErrMalformedEntity)
 	}
 
 	return nil

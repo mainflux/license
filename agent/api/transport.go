@@ -30,7 +30,7 @@ func MakeHandler(l log.Logger, agent license.Agent) http.Handler {
 	}
 	r := bone.New()
 
-	r.Post("/licenses/validate/:id", kithttp.NewServer(
+	r.Post("/licenses/validate/:service", kithttp.NewServer(
 		validateEndpoint(agent),
 		decodeValidate,
 		encodeResponse,
@@ -44,9 +44,8 @@ func MakeHandler(l log.Logger, agent license.Agent) http.Handler {
 }
 
 func decodeValidate(_ context.Context, r *http.Request) (interface{}, error) {
-	req := validateReq{
-		service: r.URL.Query().Get("service"),
-		id:      bone.GetValue(r, "id"),
+	req := validationReq{
+		svcID: bone.GetValue(r, "service"),
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -57,17 +56,9 @@ func decodeValidate(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	if ar, ok := response.(mainflux.Response); ok {
-		for k, v := range ar.Headers() {
-			w.Header().Set(k, v)
-		}
-		w.WriteHeader(ar.Code())
-		if ar.Empty() {
-			return nil
-		}
-	}
-
-	return json.NewEncoder(w).Encode(response)
+	w.Header().Set("Content-Type", "application/octet-stream")
+	_, err := w.Write(response.([]byte))
+	return err
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {

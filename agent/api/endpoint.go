@@ -12,17 +12,18 @@ import (
 
 func validateEndpoint(agent license.Agent) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(validateReq)
+		req := request.(validationReq)
 
 		if err := req.validate(); err != nil {
 			logger.Warn(err.Error())
 			return nil, err
 		}
 
-		if err := agent.Validate(req.service); err != nil {
+		ret, err := agent.Validate(req.svcID, req.client)
+		if err != nil {
 			return nil, err
 		}
 
-		return successRes{}, nil
+		return ret, nil
 	}
 }

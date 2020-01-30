@@ -4,7 +4,7 @@
 package validator
 
 import (
-	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +15,6 @@ import (
 
 type validator struct {
 	url     string
-	key     string
 	crypto  license.Crypto
 	handler license.Handler
 }
@@ -23,16 +22,15 @@ type validator struct {
 var _ license.Validator = (*validator)(nil)
 
 // New returns new license validator.
-func New(url, key string, crypto license.Crypto, handler license.Handler) license.Validator {
+func New(url string, crypto license.Crypto, handler license.Handler) license.Validator {
 	return validator{
 		url:     url,
-		key:     key,
 		crypto:  crypto,
 		handler: handler,
 	}
 }
 
-func (v validator) Validate(svcName string) (err error) {
+func (v validator) Validate(svcName, client string) (err error) {
 	defer func() {
 		v.handler(err)
 	}()
@@ -43,13 +41,7 @@ func (v validator) Validate(svcName string) (err error) {
 		return err
 	}
 
-	k, err := v.crypto.Encrypt([]byte(v.key))
-	if err != nil {
-		return err
-	}
-
-	key := hex.EncodeToString(k)
-	req.Header.Set("Authorization", key)
+	req.Header.Set("Authorization", client)
 	res, err := http.DefaultClient.Do(req)
 
 	if res != nil {
@@ -58,14 +50,27 @@ func (v validator) Validate(svcName string) (err error) {
 	if err != nil {
 		return err
 	}
-	if res.StatusCode == http.StatusOK {
-		return nil
-	}
 
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
+	dec, err := v.crypto.Decrypt(data)
+	if err != nil {
+		return err
+	}
+	var r validateResponse
+	if err := json.Unmarshal(dec, &r); err != nil {
+		return err
+	}
+	if r.Status == http.StatusOK {
+		return nil
+	}
 
-	return errors.New(string(data))
+	return errors.New(r.Message)
+}
+
+type validateResponse struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
 }

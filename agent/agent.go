@@ -90,13 +90,37 @@ func (a *agent) Save() error {
 	return <-a.errs
 }
 
-func (a *agent) Validate(service string) error {
+func (a *agent) Validate(service, client string) ([]byte, error) {
 	cmd := command{
 		action: validate,
 		param:  service,
 	}
+
+	// Validate service against license.
 	a.commands <- cmd
-	return <-a.errs
+	var ret validateResponse
+	err := <-a.errs
+	if err != nil {
+		ret.Message = err.Error()
+	}
+	switch err {
+	case nil:
+		ret.Status = http.StatusOK
+	case license.ErrLicenseValidation:
+		ret.Status = http.StatusForbidden
+	case license.ErrMalformedEntity, license.ErrNotFound:
+		ret.Status = http.StatusForbidden
+	default:
+		ret.Status = http.StatusInternalServerError
+	}
+	// Optional custom validation.
+	if a.validator != nil {
+		if err := a.validator.Validate(service, client); err != nil {
+			ret.Status = http.StatusForbidden
+			ret.Message = err.Error()
+		}
+	}
+	return json.Marshal(ret)
 }
 
 // Unlike their exported counterparts, methods load, save, and validate are not thread-safe.
@@ -150,9 +174,6 @@ func (a *agent) validate(svcName string) error {
 	}
 	for _, svc := range a.license.Services {
 		if svcName == svc {
-			if a.validator != nil {
-				return a.validator.Validate(svcName)
-			}
 			return nil
 		}
 	}
@@ -182,11 +203,7 @@ func (a *agent) fetch() ([]byte, error) {
 	return ioutil.ReadAll(res.Body)
 }
 
-func exists(p string, services []string) bool {
-	for _, s := range services {
-		if string(p) == s {
-			return true
-		}
-	}
-	return false
+type validateResponse struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
 }
