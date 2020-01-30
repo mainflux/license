@@ -6,8 +6,8 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"time"
 
+	"github.com/mainflux/license"
 	"github.com/mainflux/mainflux"
 )
 
@@ -45,27 +45,8 @@ func (res successRes) Empty() bool {
 }
 
 type licenseRes struct {
-	created   bool
-	ID        string                 `json:"id,omitempty"`
-	Issuer    string                 `json:"issuer,omitempty"`
-	DeviceID  string                 `json:"device_id,omitempty"`
-	Active    bool                   `json:"active"`
-	CreatedAt *time.Time             `json:"created_at,omitempty"`
-	ExpiresAt *time.Time             `json:"expires_at,omitempty"`
-	UpdatedAt *time.Time             `json:"updated_at,omitempty"`
-	UpdatedBy string                 `json:"updated_by,omitempty"`
-	Services  []string               `json:"services,omitempty"`
-	Plan      map[string]interface{} `json:"plan,omitempty"`
-}
-
-type fetchRes struct {
-	licenseRes
-	Signature []byte `json:"signature,omitempty"`
-}
-
-type vewRes struct {
-	licenseRes
-	Key string `json:"key,omitempty"`
+	license.License
+	created bool
 }
 
 func (res licenseRes) Code() int {

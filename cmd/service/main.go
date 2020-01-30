@@ -17,6 +17,7 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/license"
+	"github.com/mainflux/license/pkg/crypto"
 	mflicense "github.com/mainflux/license/service"
 	api "github.com/mainflux/license/service/api"
 	"github.com/mainflux/license/service/postgres"
@@ -61,7 +62,6 @@ const (
 	envDBSSLCert     = "MF_LICENSE_DB_SSL_CERT"
 	envDBSSLKey      = "MF_LICENSE_DB_SSL_KEY"
 	envDBSSLRootCert = "MF_LICENSE_DB_SSL_ROOT_CERT"
-	envEncryptKey    = "MF_LICENSE_ENCRYPT_KEY"
 	envClientTLS     = "MF_LICENSE_CLIENT_TLS"
 	envCACerts       = "MF_LICENSE_CA_CERTS"
 	envPort          = "MF_LICENSE_PORT"
@@ -76,7 +76,6 @@ type config struct {
 	logLevel    string
 	dbConfig    postgres.Config
 	clientTLS   bool
-	encKey      []byte
 	caCerts     string
 	httpPort    string
 	serverCert  string
@@ -196,7 +195,7 @@ func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logg
 	licenseRepo := postgres.New(db)
 	idp := uuid.New()
 
-	svc := mflicense.New(licenseRepo, idp, auth)
+	svc := mflicense.New(licenseRepo, idp, auth, crypto.New())
 	svc = api.NewLoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

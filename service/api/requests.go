@@ -33,6 +33,8 @@ func (req licenseReq) validate() error {
 }
 
 type createReq struct {
+	ID       string `json:"id,omitempty"`
+	Key      string `json:"key,omitempty"`
 	token    string
 	Duration time.Duration          `json:"duration,omitempty"`
 	Services []string               `json:"services,omitempty"`

@@ -1,9 +1,12 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
+
 package agent
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -34,18 +37,24 @@ const (
 type agent struct {
 	svcURL   string
 	location string
+	id       string
+	key      string
 	commands chan command
 	errs     chan error
 	license  *license.License
+	crypto   license.Crypto
 }
 
 // New returns new License agent.
-func New(svcURL, location string) license.Agent {
+func New(svcURL, location string, id, key string, crypto license.Crypto) license.Agent {
 	return &agent{
 		svcURL:   svcURL,
 		location: location,
+		id:       id,
+		key:      key,
 		commands: make(chan command),
 		errs:     make(chan error),
+		crypto:   crypto,
 	}
 }
 
@@ -96,7 +105,7 @@ func (a *agent) load() (license.License, error) {
 	default:
 		return license.License{}, err
 	}
-	data, err = Dec(data)
+	data, err = a.crypto.Decrypt(data)
 	if err != nil {
 		return license.License{}, err
 	}
@@ -113,7 +122,7 @@ func (a *agent) save() error {
 	if err != nil {
 		return err
 	}
-	data, err = Enc(data)
+	data, err = a.crypto.Encrypt(data)
 	if err != nil {
 		return err
 	}
@@ -153,18 +162,26 @@ func (a *agent) command(act action, params ...string) error {
 }
 
 func (a *agent) fetch() ([]byte, error) {
-	res, err := http.DefaultClient.Get(a.svcURL)
+	url := fmt.Sprintf("%s/%s", a.svcURL, a.id)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	k, err := a.crypto.Encrypt([]byte(a.key))
+	if err != nil {
+		return nil, err
+	}
+	key := hex.EncodeToString(k)
+	req.Header.Set("Authorization", key)
+	res, err := http.DefaultClient.Do(req)
 	if res != nil {
 		defer res.Body.Close()
 	}
 	if err != nil {
 		return nil, err
 	}
-	var data []byte
-	if _, err := res.Body.Read(data); err != nil {
-		return nil, err
-	}
-	return data, nil
+	return ioutil.ReadAll(res.Body)
 }
 
 func exists(p string, services []string) bool {

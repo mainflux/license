@@ -41,7 +41,7 @@ type Service interface {
 	Retrieve(ctx context.Context, token, id string) (License, error)
 
 	// Fetch retrieves License using license ID and Key.
-	Fetch(ctx context.Context, key, id string) (License, error)
+	Fetch(ctx context.Context, key, id string) ([]byte, error)
 
 	// Update updates an existing License that's issued
 	// by the given issuer.
@@ -56,5 +56,5 @@ type Service interface {
 	ChangeActive(ctx context.Context, token, id string, active bool) error
 
 	// Validate checks if the license is valid for the given service name.
-	Validate(ctx context.Context, svcName, id string, payload []byte) error
+	Validate(ctx context.Context, svcName, deviceID string, payload []byte) error
 }

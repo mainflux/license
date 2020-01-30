@@ -1,31 +1,24 @@
 package client
 
-import "github.com/mainflux/license"
+import (
+	"github.com/mainflux/license"
+)
 
 type client struct {
-	url string
+	url    string
+	crypto license.Crypto
 }
 
 var _ license.Client = (*client)(nil)
 
 // New returns new license client.
-func New(url string) license.Client {
+func New(url string, crypto license.Crypto) license.Client {
 	return client{
-		url: url,
+		url:    url,
+		crypto: crypto,
 	}
-}
-func (c client) Fetch(id, key string) (license.License, error) {
-	return license.License{}, nil
 }
 
-func (c client) Validate(l license.License, svcName string) error {
-	if err := l.Validate(); err != nil {
-		return err
-	}
-	for _, svc := range l.Services {
-		if svc == svcName {
-			return nil
-		}
-	}
+func (c client) Validate(svcName string) error {
 	return license.ErrNotFound
 }

@@ -58,7 +58,7 @@ func MakeHandler(tracer opentracing.Tracer, l log.Logger, svc license.Service) h
 	r.Get("/licenses/:id", kithttp.NewServer(
 		kitot.TraceServer(tracer, "fetch_license")(fetchEndpoint(svc)),
 		decodeView,
-		encodeResponse,
+		encodeFetch,
 		opts...,
 	))
 
@@ -191,6 +191,12 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 	}
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+func encodeFetch(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	_, err := w.Write(response.([]byte))
+	return err
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {

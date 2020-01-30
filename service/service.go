@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"time"
 
@@ -14,18 +15,22 @@ import (
 	"github.com/mainflux/mainflux"
 )
 
+var errEmptyDeviceID = errors.New("device id can't be empty")
+
 type licenseService struct {
-	repo license.Repository
-	idp  license.IdentityProvider
-	auth mainflux.AuthNServiceClient
+	repo   license.Repository
+	idp    license.IdentityProvider
+	auth   mainflux.AuthNServiceClient
+	crypto license.Crypto
 }
 
 // New returns new instance of License Service.
-func New(repo license.Repository, idp license.IdentityProvider, auth mainflux.AuthNServiceClient) license.Service {
+func New(repo license.Repository, idp license.IdentityProvider, auth mainflux.AuthNServiceClient, crypto license.Crypto) license.Service {
 	return licenseService{
-		repo: repo,
-		idp:  idp,
-		auth: auth,
+		repo:   repo,
+		idp:    idp,
+		auth:   auth,
+		crypto: crypto,
 	}
 }
 
@@ -37,15 +42,21 @@ func (svc licenseService) Create(ctx context.Context, token string, l license.Li
 	if err != nil {
 		return "", errors.Wrap(license.ErrUnauthorizedAccess, err)
 	}
-	l.ID, err = svc.idp.ID()
-	if err != nil {
-		return "", err
+	if l.DeviceID == "" {
+		return "", errors.Wrap(license.ErrMalformedEntity, errEmptyDeviceID)
 	}
-	l.Key, err = svc.idp.ID()
-	if err != nil {
-		return "", err
+	if l.ID == "" {
+		l.ID, err = svc.idp.ID()
+		if err != nil {
+			return "", err
+		}
 	}
-
+	if l.Key == "" {
+		l.Key, err = svc.idp.ID()
+		if err != nil {
+			return "", err
+		}
+	}
 	l.Issuer = issuer.GetValue()
 	l.UpdatedAt = l.CreatedAt
 	l.UpdatedBy = l.Issuer
@@ -66,28 +77,36 @@ func (svc licenseService) Retrieve(ctx context.Context, token, id string) (licen
 	return l, nil
 }
 
-func (svc licenseService) Fetch(ctx context.Context, key, id string) (license.License, error) {
-	l, err := svc.repo.RetrieveByID(ctx, id)
+func (svc licenseService) Fetch(ctx context.Context, key, deviceID string) ([]byte, error) {
+	l, err := svc.repo.RetrieveByDeviceID(ctx, deviceID)
 	if err != nil {
-		return license.License{}, err
+		return nil, err
 	}
+	b, err := hex.DecodeString(key)
+	if err != nil {
+		return nil, err
+	}
+	dec, err := svc.crypto.Decrypt(b)
+	if err != nil {
+		return nil, err
+	}
+	key = string(dec)
 	if l.Key != key {
-		return license.License{}, license.ErrUnauthorizedAccess
+		return nil, license.ErrUnauthorizedAccess
 	}
 	if err := l.Validate(); err != nil {
-		return license.License{}, err
+		return nil, err
 	}
 	bytes, err := json.Marshal(l)
 	if err != nil {
-		return license.License{}, errors.Wrap(license.ErrMalformedEntity, err)
+		return nil, errors.Wrap(license.ErrMalformedEntity, err)
 	}
 	h := hmac.New(sha256.New, []byte(l.Key))
 	if _, err := h.Write(bytes); err != nil {
-		return license.License{}, license.ErrMalformedEntity
+		return nil, errors.Wrap(license.ErrMalformedEntity, err)
 	}
 	l.Signature = h.Sum(nil)
-
-	return l, nil
+	return svc.crypto.Encrypt(bytes)
 }
 
 func (svc licenseService) Update(ctx context.Context, token string, l license.License) error {
@@ -119,8 +138,8 @@ func (svc licenseService) ChangeActive(ctx context.Context, token, id string, ac
 	return svc.repo.ChangeActive(ctx, issuer.GetValue(), id, active)
 }
 
-func (svc licenseService) Validate(ctx context.Context, name, id string, payload []byte) error {
-	l, err := svc.repo.RetrieveByID(ctx, id)
+func (svc licenseService) Validate(ctx context.Context, name, deviceID string, payload []byte) error {
+	l, err := svc.repo.RetrieveByDeviceID(ctx, deviceID)
 	if err != nil {
 		return err
 	}

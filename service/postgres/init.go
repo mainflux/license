@@ -52,7 +52,7 @@ func migrateDB(db *sqlx.DB) error {
 						id         UUID,
 						issuer     VARCHAR(254),
 						key        TEXT NOT NULL,
-						device_id  TEXT NOT NULL,
+						device_id  TEXT UNIQUE NOT NULL,
 						active     BOOLEAN DEFAULT FALSE,
 						created_at TIMESTAMP NOT NULL,
 						expires_at TIMESTAMP,

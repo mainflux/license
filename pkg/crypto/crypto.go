@@ -1,6 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
-package agent
+
+package crypto
 
 import (
 	"crypto/aes"
@@ -10,12 +11,23 @@ import (
 	"errors"
 	"io"
 	"strconv"
+
+	"github.com/mainflux/license"
 )
 
 const power = 7
 
+var _ license.Crypto = (*aesCrypto)(nil)
+
+type aesCrypto struct{}
+
+// New return new aesCrypto encriptor/decriptor.
+func New() license.Crypto {
+	return aesCrypto{}
+}
+
 // Enc is used to encode string using AES algorithm.
-func Enc(in []byte) ([]byte, error) {
+func (a aesCrypto) Encrypt(in []byte) ([]byte, error) {
 	str, err := str()
 	if err != nil {
 		return []byte{}, err
@@ -35,7 +47,7 @@ func Enc(in []byte) ([]byte, error) {
 }
 
 // Dec is used to decode binary content.
-func Dec(in []byte) ([]byte, error) {
+func (a aesCrypto) Decrypt(in []byte) ([]byte, error) {
 	key, err := str()
 	if err != nil {
 		return nil, err
@@ -63,7 +75,6 @@ func str() ([]byte, error) {
 func mid(b string) (ret string) {
 	ret = b
 	ret = "110981" + strconv.Itoa((18*power)+2)
-	println(len(ret))
 	return
 }
 
