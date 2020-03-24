@@ -83,4 +83,5 @@ default values.
 | MF_AGENT_LICENSE_ID         | Agent License ID                                                  |                                  |
 
 The Agent fetches the License using it's ID, and exposes HTTP API for validation. You can se the License validation flow on the diagram below:
+
 ![diagram](./docs/diagram.png)
