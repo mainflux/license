@@ -23,8 +23,9 @@ import (
 )
 
 const (
+	defLicenseID   = ""
 	defLogLevel    = "error"
-	defSvcURL      = "http://localhost:8180/licenses"
+	defSvcURL      = "http://localhost:8111/licenses"
 	defLicenseFile = "./license"
 	defClientTLS   = "false"
 	defServerCert  = ""
@@ -32,11 +33,12 @@ const (
 	defPort        = "3000"
 	defLoadWait    = "60"
 
+	envLicenseID   = "MF_AGENT_LICENSE_ID"
 	envLogLevel    = "MF_LICENSE_LOG_LEVEL"
 	envSvcURL      = "MF_LICENSE_SERVICE_URL"
 	envLicenseFile = "LICENSE_FILE"
 	envClientTLS   = "MF_LICENSE_CLIENT_TLS"
-	envServerCert  = "MF_LICENSE_SERVER_CERT"
+	envServerCert  = "MF_LICENSE_AGENT_CERT"
 	envServerKey   = "MF_AGENT_SERVER_KEY"
 	envPort        = "MF_AGENT_PORT"
 	envLoadWait    = "MF_AGENT_LOAD_RETRY_SECONDS"
@@ -102,6 +104,7 @@ func loadConfig() config {
 	}
 
 	return config{
+		licenseID:   mainflux.Env(envLicenseID, defLicenseID),
 		svcURL:      mainflux.Env(envSvcURL, defSvcURL),
 		logLevel:    mainflux.Env(envLogLevel, defLogLevel),
 		tls:         tls,

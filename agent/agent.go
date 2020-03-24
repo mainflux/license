@@ -116,8 +116,10 @@ func (a *agent) Validate(service, client string) ([]byte, error) {
 	// Optional custom validation.
 	if a.validator != nil {
 		if err := a.validator.Validate(service, client); err != nil {
-			ret.Status = http.StatusForbidden
-			ret.Message = err.Error()
+			ret = validateResponse{
+				Status:  http.StatusForbidden,
+				Message: err.Error(),
+			}
 		}
 	}
 	return json.Marshal(ret)
