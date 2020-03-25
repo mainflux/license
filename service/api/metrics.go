@@ -47,6 +47,15 @@ func (ms *metricsMiddleware) Retrieve(ctx context.Context, owner, id string) (l 
 	return ms.svc.Retrieve(ctx, owner, id)
 }
 
+func (ms *metricsMiddleware) RetrieveByDeviceID(ctx context.Context, deviceID string) (res []byte, err error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "retrieve_by_device_id").Add(1)
+		ms.latency.With("method", "retrieve_by_device_id").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.RetrieveByDeviceID(ctx, deviceID)
+}
+
 func (ms *metricsMiddleware) Fetch(ctx context.Context, key, id string) (res []byte, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "fetch").Add(1)

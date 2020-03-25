@@ -40,6 +40,9 @@ type Service interface {
 	//  the user identified by the provided token.
 	Retrieve(ctx context.Context, token, id string) (License, error)
 
+	// RetrieveByDeviceID retrieves the License by given ID.
+	RetrieveByDeviceID(ctx context.Context, deviceID string) ([]byte, error)
+
 	// Fetch retrieves License using license ID and Key.
 	Fetch(ctx context.Context, key, id string) ([]byte, error)
 

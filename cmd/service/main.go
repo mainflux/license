@@ -45,7 +45,7 @@ const (
 	defDBSSLRootCert = ""
 	defClientTLS     = "false"
 	defCACerts       = ""
-	defPort          = "8180"
+	defPort          = "8111"
 	defServerCert    = ""
 	defServerKey     = ""
 	defJaegerURL     = ""
@@ -74,7 +74,6 @@ const (
 
 type config struct {
 	logLevel    string
-	dbConfig    postgres.Config
 	clientTLS   bool
 	caCerts     string
 	httpPort    string
@@ -83,6 +82,7 @@ type config struct {
 	jaegerURL   string
 	authURL     string
 	authTimeout time.Duration
+	dbConfig    postgres.Config
 }
 
 func main() {

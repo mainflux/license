@@ -77,6 +77,28 @@ func (svc licenseService) Retrieve(ctx context.Context, token, id string) (licen
 	return l, nil
 }
 
+func (svc licenseService) RetrieveByDeviceID(ctx context.Context, deviceID string) ([]byte, error) {
+	b, err := hex.DecodeString(deviceID)
+	if err != nil {
+		return nil, err
+	}
+	dec, err := svc.crypto.Decrypt(b)
+	if err != nil {
+		return nil, err
+	}
+	deviceID = string(dec)
+	l, err := svc.repo.RetrieveByDeviceID(ctx, deviceID)
+	if err != nil {
+		return nil, err
+	}
+	bytes, err := json.Marshal(l)
+	if err != nil {
+		return nil, errors.Wrap(license.ErrMalformedEntity, err)
+	}
+
+	return svc.crypto.Encrypt(bytes)
+}
+
 func (svc licenseService) Fetch(ctx context.Context, key, deviceID string) ([]byte, error) {
 	l, err := svc.repo.RetrieveByDeviceID(ctx, deviceID)
 	if err != nil {

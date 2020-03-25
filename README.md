@@ -54,7 +54,7 @@ default values.
 | MF_LICENSE_DB_SSL_ROOT_CERT | DB SSL root cert          |                |
 | MF_LICENSE_CLIENT_TLS       | Client TLS                | false          |
 | MF_LICENSE_CA_CERTS         | gRPC CA cert              |                |
-| MF_LICENSE_PORT             | service HTTP port         | 8081           |
+| MF_LICENSE_PORT             | service HTTP port         | 8111           |
 | MF_LICENSE_SERVER_CERT      | server TLS cert           |                |
 | MF_LICENSE_SERVER_KEY       | server TLS cert key       |                |
 | MF_JAEGER_URL               | tracing URL               |                |
@@ -70,18 +70,17 @@ The agent is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                    | Description                                                       | Default                          |
-| --------------------------- | ----------------------------------------------------------------- | -------------------------------- |
-| MF_LICENSE_LOG_LEVEL        | Agent log level                                                   | "error"                          |
-| MF_LICENSE_SERVICE_URL      | License service URL                                               | "http://localhost:8180/licenses" |
-| LICENSE_FILE                | File to store license in                                          | "./license"                      |
-| MF_LICENSE_CLIENT_TLS       | HTTP client for License service                                   | "false"                          |
-| MF_LICENSE_AGENT_CERT       | Agent  TLS cert                                                   |                                  |
-| MF_AGENT_SERVER_KEY         | Agen  TLS cert key                                                |                                  |
-| MF_AGENT_PORT               | Agent port                                                        |                                  |
-| MF_AGENT_LOAD_RETRY_SECONDS | Retry period in seconds to wait between two sync calls to service | 60                               |
-| MF_AGENT_LICENSE_ID         | Agent License ID                                                  |                                  |
+| Variable                    | Description                                                       | Default                                  |
+| --------------------------- | ----------------------------------------------------------------- | ---------------------------------------- |
+| MF_LICENSE_LOG_LEVEL        | Agent log level                                                   | "error"                                  |
+| MF_LICENSE_SERVICE_URL      | License service URL                                               | "http://localhost:8111/licenses/devices" |
+| LICENSE_FILE                | File to store license in                                          | "./license"                              |
+| MF_LICENSE_CLIENT_TLS       | HTTP client for License service                                   | "false"                                  |
+| MF_LICENSE_AGENT_CERT       | Agent  TLS cert                                                   |                                          |
+| MF_AGENT_SERVER_KEY         | Agen  TLS cert key                                                |                                          |
+| MF_AGENT_PORT               | Agent port                                                        | "3000"                                   |
+| MF_AGENT_LOAD_RETRY_SECONDS | Retry period in seconds to wait between two sync calls to service | "60"                                     |
 
-The Agent fetches the License using it's ID, and exposes HTTP API for validation. You can se the License validation flow on the diagram below:
+The Agent fetches the License using its ID, and exposes HTTP API for validation. You can se the License validation flow on the diagram below:
 
 ![diagram](./docs/diagram.png)

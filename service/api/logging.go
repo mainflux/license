@@ -50,6 +50,19 @@ func (lm *loggingMiddleware) Retrieve(ctx context.Context, owner, id string) (l 
 	return lm.svc.Retrieve(ctx, owner, id)
 }
 
+func (lm *loggingMiddleware) RetrieveByDeviceID(ctx context.Context, deviceID string) (res []byte, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method retrieve_by_device_id with device ID %s took %s to complete", deviceID, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.RetrieveByDeviceID(ctx, deviceID)
+}
+
 func (lm *loggingMiddleware) Fetch(ctx context.Context, key, id string) (res []byte, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method fetch with ID %s took %s to complete", id, time.Since(begin))

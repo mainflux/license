@@ -62,6 +62,13 @@ func MakeHandler(tracer opentracing.Tracer, l log.Logger, svc license.Service) h
 		opts...,
 	))
 
+	r.Get("/licenses/devices/:id", kithttp.NewServer(
+		kitot.TraceServer(tracer, "fetch_by_device_id")(viewByDeviceIDEndpoint(svc)),
+		decodeView,
+		encodeFetch,
+		opts...,
+	))
+
 	r.Patch("/licenses/:id", kithttp.NewServer(
 		kitot.TraceServer(tracer, "update_license")(updateEndpoint(svc)),
 		decodeUpdate,
@@ -85,14 +92,14 @@ func MakeHandler(tracer opentracing.Tracer, l log.Logger, svc license.Service) h
 
 	r.Patch("/licenses/activation/:id", kithttp.NewServer(
 		kitot.TraceServer(tracer, "activation_license")(activationEndpoint(svc, true)),
-		decodeActivation,
+		decodeView,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Delete("/licenses/activation/:id", kithttp.NewServer(
 		kitot.TraceServer(tracer, "activation_license")(activationEndpoint(svc, false)),
-		decodeActivation,
+		decodeView,
 		encodeResponse,
 		opts...,
 	))
@@ -133,19 +140,6 @@ func decodeUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
-	}
-
-	req := licenseReq{
-		token: r.Header.Get("Authorization"),
-		id:    bone.GetValue(r, "id"),
-	}
-
-	return req, nil
-}
-
-func decodeActivation(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}

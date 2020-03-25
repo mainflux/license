@@ -122,7 +122,11 @@ func (a *agent) Validate(service, client string) ([]byte, error) {
 			}
 		}
 	}
-	return json.Marshal(ret)
+	b, err := json.Marshal(ret)
+	if err != nil {
+		return nil, err
+	}
+	return a.crypto.Encrypt(b)
 }
 
 // Unlike their exported counterparts, methods load, save, and validate are not thread-safe.
@@ -183,18 +187,17 @@ func (a *agent) validate(svcName string) error {
 }
 
 func (a *agent) fetch() ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", a.svcURL, a.id)
+	id, err := a.crypto.Encrypt([]byte(a.id))
+	if err != nil {
+		return nil, err
+	}
+	q := hex.EncodeToString(id)
+	url := fmt.Sprintf("%s/%s", a.svcURL, q)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	k, err := a.crypto.Encrypt([]byte(a.key))
-	if err != nil {
-		return nil, err
-	}
-	key := hex.EncodeToString(k)
-	req.Header.Set("Authorization", key)
 	res, err := http.DefaultClient.Do(req)
 	if res != nil {
 		defer res.Body.Close()

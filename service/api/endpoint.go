@@ -82,6 +82,18 @@ func fetchEndpoint(svc license.Service) endpoint.Endpoint {
 	}
 }
 
+func viewByDeviceIDEndpoint(svc license.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(licenseReq)
+
+		if err := req.validate(); err != nil {
+			logger.Warn(err.Error())
+			return nil, err
+		}
+
+		return svc.RetrieveByDeviceID(ctx, req.id)
+	}
+}
 func updateEndpoint(svc license.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateReq)
