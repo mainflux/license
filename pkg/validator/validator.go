@@ -4,9 +4,9 @@
 package validator
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -34,16 +34,16 @@ func (v validator) Validate(svcName, client string) (err error) {
 	defer func() {
 		v.handler(err)
 	}()
-
-	url := fmt.Sprintf("%s/%s", v.url, svcName)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	b, err := v.req(svcName, client)
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set("Authorization", client)
+	req, err := http.NewRequest(http.MethodGet, v.url, bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
 	res, err := http.DefaultClient.Do(req)
-
 	if res != nil {
 		defer res.Body.Close()
 	}
@@ -68,6 +68,23 @@ func (v validator) Validate(svcName, client string) (err error) {
 	}
 
 	return errors.New(r.Message)
+}
+
+func (v validator) req(svc, client string) ([]byte, error) {
+	r := validateReq{
+		SvcID:  svc,
+		Client: client,
+	}
+	b, err := json.Marshal(r)
+	if err != nil {
+		return nil, err
+	}
+	return v.crypto.Encrypt(b)
+}
+
+type validateReq struct {
+	SvcID  string `json:"service"`
+	Client string `json:"client"`
 }
 
 type validateResponse struct {

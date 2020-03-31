@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/mainflux/license/errors"
@@ -30,7 +31,7 @@ func MakeHandler(l log.Logger, agent license.Agent) http.Handler {
 	}
 	r := bone.New()
 
-	r.Post("/licenses/validate/:service", kithttp.NewServer(
+	r.Post("/licenses/validate", kithttp.NewServer(
 		validateEndpoint(agent),
 		decodeValidate,
 		encodeResponse,
@@ -44,15 +45,7 @@ func MakeHandler(l log.Logger, agent license.Agent) http.Handler {
 }
 
 func decodeValidate(_ context.Context, r *http.Request) (interface{}, error) {
-	req := validationReq{
-		svcID: bone.GetValue(r, "service"),
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-
-	return req, nil
+	return ioutil.ReadAll(r.Body)
 }
 
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
@@ -63,9 +56,7 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch err {
-	case io.ErrUnexpectedEOF:
-		w.WriteHeader(http.StatusBadRequest)
-	case io.EOF:
+	case io.ErrUnexpectedEOF, io.EOF:
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	switch e := err.(type) {

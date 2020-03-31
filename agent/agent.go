@@ -70,6 +70,7 @@ func (a *agent) Do() {
 			l, err = a.load()
 			if err == nil {
 				a.license = &l
+				err = a.save()
 			}
 		case validate:
 			err = a.validate(cmd.param)
@@ -90,43 +91,40 @@ func (a *agent) Save() error {
 	return <-a.errs
 }
 
-func (a *agent) Validate(service, client string) ([]byte, error) {
+func (a *agent) Validate(r []byte) ([]byte, error) {
+	val, err := a.req(r)
+	if err != nil {
+		return nil, err
+	}
 	cmd := command{
 		action: validate,
-		param:  service,
+		param:  val.SvcID,
 	}
 
 	// Validate service against license.
 	a.commands <- cmd
-	var ret validateResponse
-	err := <-a.errs
+	ret := validateResponse{Status: http.StatusForbidden}
+	err = <-a.errs
 	if err != nil {
 		ret.Message = err.Error()
 	}
-	switch err {
-	case nil:
-		ret.Status = http.StatusOK
-	case license.ErrLicenseValidation:
-		ret.Status = http.StatusForbidden
-	case license.ErrMalformedEntity, license.ErrNotFound:
-		ret.Status = http.StatusForbidden
-	default:
-		ret.Status = http.StatusInternalServerError
-	}
+
 	// Optional custom validation.
-	if a.validator != nil {
-		if err := a.validator.Validate(service, client); err != nil {
+	if a.validator != nil && err == nil {
+		if err := a.validator.Validate(val.SvcID, val.Client); err != nil {
 			ret = validateResponse{
 				Status:  http.StatusForbidden,
 				Message: err.Error(),
 			}
 		}
 	}
-	b, err := json.Marshal(ret)
+
+	resp, err := json.Marshal(ret)
 	if err != nil {
 		return nil, err
 	}
-	return a.crypto.Encrypt(b)
+
+	return a.crypto.Encrypt(resp)
 }
 
 // Unlike their exported counterparts, methods load, save, and validate are not thread-safe.

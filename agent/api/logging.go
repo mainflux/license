@@ -5,9 +5,10 @@ package api
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/mainflux/license"
 	log "github.com/mainflux/mainflux/logger"
-	"time"
 )
 
 var _ license.Agent = (*loggingMiddleware)(nil)
@@ -48,9 +49,9 @@ func (lm *loggingMiddleware) Save() (err error) {
 	return lm.agent.Save()
 }
 
-func (lm *loggingMiddleware) Validate(svcName, client string) (res []byte, err error) {
+func (lm *loggingMiddleware) Validate(req []byte) (res []byte, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method validate for service %s took %s to complete", svcName, time.Since(begin))
+		message := fmt.Sprintf("Method validate took %s to complete", time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -58,7 +59,7 @@ func (lm *loggingMiddleware) Validate(svcName, client string) (res []byte, err e
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.agent.Validate(svcName, client)
+	return lm.agent.Validate(req)
 }
 
 func (lm *loggingMiddleware) Do() {
