@@ -35,6 +35,9 @@ func (l License) Validate() error {
 	if l.CreatedAt.UTC().After(now) {
 		return errors.Wrap(ErrMalformedEntity, ErrIssuedAt)
 	}
+	if !l.Active {
+		return ErrLicenseValidation
+	}
 	return nil
 }
 

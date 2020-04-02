@@ -91,7 +91,7 @@ func viewByDeviceIDEndpoint(svc license.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return svc.RetrieveByDeviceID(ctx, req.id)
+		return svc.RetrieveByDeviceID(ctx, req.token)
 	}
 }
 func updateEndpoint(svc license.Service) endpoint.Endpoint {

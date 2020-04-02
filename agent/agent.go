@@ -190,11 +190,11 @@ func (a *agent) fetch() ([]byte, error) {
 		return nil, err
 	}
 	q := hex.EncodeToString(id)
-	url := fmt.Sprintf("%s/%s", a.svcURL, q)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodGet, a.svcURL, nil)
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("Authorization", q)
 	req.Header.Set("Content-Type", "application/json")
 	res, err := http.DefaultClient.Do(req)
 	if res != nil {

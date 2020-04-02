@@ -62,7 +62,7 @@ func MakeHandler(tracer opentracing.Tracer, l log.Logger, svc license.Service) h
 		opts...,
 	))
 
-	r.Get("/licenses/devices/:id", kithttp.NewServer(
+	r.Get("/licenses/devices", kithttp.NewServer(
 		kitot.TraceServer(tracer, "fetch_by_device_id")(viewByDeviceIDEndpoint(svc)),
 		decodeView,
 		encodeFetch,
@@ -146,7 +146,6 @@ func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
 
 	req := licenseReq{
 		token: r.Header.Get("Authorization"),
-		id:    bone.GetValue(r, "id"),
 	}
 
 	return req, nil
